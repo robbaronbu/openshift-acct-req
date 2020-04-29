@@ -9,7 +9,8 @@ import pytest_check as check
 def get_microserver():
     # export MICROSERVER_URL=https://acct-req.k-apps.osh.massopen.cloud 
     # export MICROSERVER_URL=https://acct-mgt-acct-mgt.s-apps.osh.massopen.cloud
-    microserver_url='https://acct-mgt-acct-mgt.s-apps.osh.massopen.cloud'
+    #microserver_url='https://acct-mgt-acct-mgt.s-apps.osh.massopen.cloud'
+    microserver_url='https://acct-mgt-2.s-apps.osh.massopen.cloud'
     return microserver_url;
 
 # Don't use this one.
@@ -54,13 +55,6 @@ def wait_until_done(oc_cmd, finished_pattern, time_out=30, decrement=5):
     if(p1.match(matched_line)):
         return True
     return False
-
-def build_and_deploy():
-    subprocess.run(['docker','build','-f','Dockerfile.x86','-t','docker.io/robertbartlettbaron/acct-mgt.x86','.'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    subprocess.run(['docker','push','docker.io/robertbartlettbaron/acct-mgt.x86'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    subprocess.run(['oc','rollout','latest','acct-mgt'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    result=subprocess.run(['oc','get','all'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT) 
-    return wait_until_container_is_ready()
 
 def user(user_name, op, success_pattern):
     microserver_url=get_microserver()
@@ -181,9 +175,9 @@ def ms_user_project_remove_role(user_name, project_name, role, success_pattern):
         return True
     return False
 
+
 def test_project():
     result=0
-
     #if(oc_resource_exist("project", "test-001",'test-001[ \t]*test-001[ \t]','Error from server (NotFound): namespaces "test-001" not found')):
     #    print("Error: test_project failed as a project with a name of test-001 exists.  Please delete first and rerun the tests\n")
     #    assertTrue(False)
@@ -214,7 +208,7 @@ def test_project():
     if(not oc_resource_exist("project", "test-001",'test-001[ \t]*test-001[ \t]','Error from server (NotFound): namespaces "test-001" not found')):
         check.is_false(ms_delete_project('test-001'),"shouldn't be able to delete a non-existing project" )
     check.is_false(oc_resource_exist("project", "test-001",r'test-001[ \t]*test-001[ \t]',r'Error from server (NotFound): namespaces "test-001" not found'),"Project test-001 exists and it should not")
-
+    
     # these tests are primarily done to ensure that the microserver doesn't crash
     #    When the "displayName" is not present, or the json doesn't exist, the displayName shall default to the project_uuid (first parameter)
     check.is_true(ms_create_project('1234-1234-1234-1234',r'{"displayName":"test-001"}'),'Project (1234-1234-1234-1234) not created')
@@ -225,9 +219,6 @@ def test_project():
     ms_delete_project('3234-1234-1234-1234')
     check.is_true(ms_create_project('4234-1234-1234-1234',None),'Project (4234-1234-1234-1234) not created')
     ms_delete_project('4234-1234-1234-1234')
-
-
-
 
 def test_user():
     #if(oc_resource_exist("user", "test01",r'test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01',r'Error from server (NotFound): users.user.openshift.io "test01" not found')):
