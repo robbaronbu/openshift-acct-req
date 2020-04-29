@@ -33,9 +33,9 @@ def wait_until_container_is_ready():
         return True
     return False
     
-def build_and_deploy():
-    subprocess.run(['docker','build','-f','Dockerfile.x86','-t','docker.io/robertbartlettbaron/acct-mgt.x86','.'])
-    subprocess.run(['docker','push','docker.io/robertbartlettbaron/acct-mgt.x86'])
+def build_and_deploy(docker_image):
+    subprocess.run(['docker','build','-f','Dockerfile.x86','-t',docker_image,'.'])
+    subprocess.run(['docker','push',docker_image])
     subprocess.run(['oc','-n','acct-mgt','rollout','latest','acct-mgt'])
     result=subprocess.run(['oc','get','all'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT) 
     return wait_until_container_is_ready()
@@ -250,8 +250,9 @@ def main():
     project="acct-mgt-2"
     openshift_url="s-openshift.osh.massopen.cloud:8443"
     host_subdomain="s-apps.osh.massopen.cloud"
-    docker_image="docker.io/robertbartlettbaron/acct-mgt.x86:latest"
-    #build_and_deploy()
-    build_and_deploy2(openshift_url, project, microserver_url, host_subdomain,docker_image)
+    docker_image="docker.io/robertbartlettbaron/acct-mgt.x86"
+    docker_version=":latest"
+    build_and_deploy(docker_image)
+    build_and_deploy2(openshift_url, project, microserver_url, host_subdomain,docker_image+docker_version)
 
 main()
