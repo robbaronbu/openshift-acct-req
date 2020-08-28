@@ -10,6 +10,7 @@ import time
 import json
 import pprint
 
+
 def usage_msg():
     print(
         """
@@ -28,6 +29,7 @@ def usage_msg():
         build.py "acct-mgt" "acct-mgt" "apps.cnv.massopen.cloud" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user:passwd"
     """
     )
+
 
 def get_pod_status(project, pod_name):
     result = subprocess.run(
@@ -152,7 +154,7 @@ def oc_create_service_account(project, service_account, cluster_role):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        #if result.returncode == 0:
+        # if result.returncode == 0:
         #    result_json = json.loads(result.stdout.decode("utf-8"))
         #    pprint.pprint(result_json)
         # else:
@@ -172,10 +174,10 @@ def oc_create_service_account(project, service_account, cluster_role):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        #if result.returncode == 0:
+        # if result.returncode == 0:
         #    result_json = json.loads(result.stdout.decode("utf-8"))
         #    pprint.pprint(result_json)
-        #else:
+        # else:
         #    pprint.pprint(result)
 
 
@@ -280,30 +282,25 @@ def get_dc_def(openshift_url, project, docker_image, configmap_name):
                                 },
                                 "volumeMounts": [
                                     {
-                                    "mountPath": "/app/auth",
-                                    "name": "admin-pass",
-                                    "readOnly": True,    
+                                        "mountPath": "/app/auth",
+                                        "name": "admin-pass",
+                                        "readOnly": True,
                                     },
-                                ]
+                                ],
                             }
                         ],
                         "dnsPolicy": "ClusterFirst",
                         "restartPolicy": "Always",
                         "terminationGracePeriodSeconds": 30,
-                        "volumes": [ 
+                        "volumes": [
                             {
                                 "name": "admin-pass",
                                 "configMap": {
                                     "name": configmap_name,
-                                    "items": [
-                                        {
-                                            "key": "user-data",
-                                            "path": "users"
-                                        }
-                                    ]
-                                }
+                                    "items": [{"key": "user-data", "path": "users"}],
+                                },
                             }
-                        ]
+                        ],
                     },
                     "paramters": [
                         {
@@ -349,6 +346,7 @@ def oc_create_dc(openshift_url, project, docker_image, configmap_name):
     print(dc)
     proc.communicate(dc.encode())
 
+
 def get_svc_def(project, service, port=8080):
     svc = ""
     if project is not None and len(project) > 0 and port is not None:
@@ -390,15 +388,16 @@ def get_route_def(project, microserver_url, ext_service):
         "metadata": {
             "name": project,
             "namespace": project,
-            "labels": {"app": "nginx-proxy"}
+            "labels": {"app": "nginx-proxy"},
         },
         "spec": {
             "host": project + "." + microserver_url,
             "port": {"targetPort": "7443-tcp"},
             "tls": {"termination": "passthrough"},
-            "to": {"kind": "Service", "name": ext_service, "weight": 100}
+            "to": {"kind": "Service", "name": ext_service, "weight": 100},
         },
     }
+
 
 def get_pass_configmap(project, cm_name, username, password):
     configmap = {
@@ -409,7 +408,7 @@ def get_pass_configmap(project, cm_name, username, password):
             "namespace": project,
             "labels": {"app": project},
         },
-        "data": { "user-data": username+" "+password } 
+        "data": {"user-data": username + " " + password},
     }
     return json.dumps(configmap)
 
@@ -427,9 +426,8 @@ def oc_create_cm_pass(project, cm_name, username, password):
     print("\n\n")
     proc.communicate(cm.encode())
 
-def create_objects(
-    openshift_url, project, service, docker_image, username, password
-):
+
+def create_objects(openshift_url, project, service, docker_image, username, password):
     if not oc_project_exists(project):
         oc_create_project(project)
     if not oc_service_account_exists(project, project + "-sa") or not oc_sa_role_exists(
@@ -439,13 +437,13 @@ def create_objects(
     if not oc_service_exists(project, service):
         oc_create_service(project, service)
 
-    #if not oc_route_exists(project, microserver_url, ext_service):
+    # if not oc_route_exists(project, microserver_url, ext_service):
     #    oc_create_route()
 
-    cm_name="admin-pass"
-    #if oc_cm_pass_exists(project, cm_name):
+    cm_name = "admin-pass"
+    # if oc_cm_pass_exists(project, cm_name):
     #    oc_delete_configmap(project, cm_name)
-    oc_create_cm_pass(project, cm_name, username,password)
+    oc_create_cm_pass(project, cm_name, username, password)
 
     if not oc_dc_exists(project, project):
         oc_create_dc(openshift_url, project, docker_image, cm_name)
@@ -454,10 +452,10 @@ def create_objects(
 
 
 def main():
-        # TODO: make the commandline interface more reasonable
+    # TODO: make the commandline interface more reasonable
     #      1) doing a docker build should be optional
     #      2) generating all of the certificates should be optional
-    if not (len(sys.argv) in [6,8]):
+    if not (len(sys.argv) in [6, 8]):
         usage_msg()
     else:
         project = str(sys.argv[1])
@@ -467,9 +465,9 @@ def main():
         docker_image = str(sys.argv[5])
         username = ""
         password = ""
-        if len (sys.argv) == 8:
+        if len(sys.argv) == 8:
             username = str(sys.argv[6])
-            password = str(sys.argv[7])            
+            password = str(sys.argv[7])
 
         build_docker_image(docker_file, docker_image)
 
@@ -481,12 +479,7 @@ def main():
             oc_create_project(project)
 
         create_objects(
-            openshift_url,
-            project,
-            service,
-            docker_image,
-            username,
-            password
+            openshift_url, project, service, docker_image, username, password
         )
 
 

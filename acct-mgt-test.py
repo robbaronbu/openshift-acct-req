@@ -15,6 +15,7 @@ import time
 import pytest
 import pytest_check as check
 
+
 def get_pod_status(project, pod_name):
     result = subprocess.run(
         ["oc", "-n", project, "-o", "json", "get", "pod", pod_name],
@@ -55,16 +56,17 @@ def user(user_name, op, success_pattern):
     elif op == "del":
         url_op = "DELETE"
 
-    #result = subprocess.run(
+    # result = subprocess.run(
     #    ["curl", "-X", op, "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", url + "/users/" + user_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
         ["curl", "-X", op, "-kv", "-cert", r"acct-mgt-2", url + "/users/" + user_name],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
+
 
 def compare_results(result, pattern):
     if result is not None:
@@ -98,14 +100,22 @@ def oc_resource_exist(resource, kind, name, project=None):
     return False
 
 
-def ms_check_project(acct_mgt_url,username, password,project_name):
-    #result = subprocess.run(
+def ms_check_project(acct_mgt_url, username, password, project_name):
+    # result = subprocess.run(
     #    ["curl", "-X", "GET", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/projects/" + project_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
-        ["curl", "-X", "GET", "-kv", "-cert", r"acct-mgt-2", acct_mgt_url + "/projects/" + project_name],
+        [
+            "curl",
+            "-X",
+            "GET",
+            "-kv",
+            "-cert",
+            r"acct-mgt-2",
+            acct_mgt_url + "/projects/" + project_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -119,20 +129,28 @@ def ms_check_project(acct_mgt_url,username, password,project_name):
 # expect this to be called with
 #  project_uuid="1234-1234-1234-1234"
 #  displayNameStr=None | '{"displayName":"project_name"}' | '{"funkyName":"project_name"}'
-def ms_create_project(acct_mgt_url,username, password,project_uuid, displayNameStr):
+def ms_create_project(acct_mgt_url, username, password, project_uuid, displayNameStr):
     if displayNameStr is None:
-        #result = subprocess.run(
+        # result = subprocess.run(
         #    ["curl", "-X", "PUT", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/projects/" + project_uuid],
         #    stdout=subprocess.PIPE,
         #    stderr=subprocess.STDOUT,
-        #)
+        # )
         result = subprocess.run(
-            ["curl", "-X", "PUT", "-kv", "-cert", r"acct-mgt-2", acct_mgt_url + "/projects/" + project_uuid],
+            [
+                "curl",
+                "-X",
+                "PUT",
+                "-kv",
+                "-cert",
+                r"acct-mgt-2",
+                acct_mgt_url + "/projects/" + project_uuid,
+            ],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
     else:
-        #result = subprocess.run(
+        # result = subprocess.run(
         #    [
         #        "curl",
         #        "-X",
@@ -144,7 +162,7 @@ def ms_create_project(acct_mgt_url,username, password,project_uuid, displayNameS
         #    ],
         #    stdout=subprocess.PIPE,
         #    stderr=subprocess.STDOUT,
-        #)
+        # )
         result = subprocess.run(
             [
                 "curl",
@@ -152,7 +170,9 @@ def ms_create_project(acct_mgt_url,username, password,project_uuid, displayNameS
                 "PUT",
                 "-d",
                 displayNameStr,
-                "-kv", "-cert", r"acct-mgt-2",
+                "-kv",
+                "-cert",
+                r"acct-mgt-2",
                 acct_mgt_url + "/projects/" + project_uuid,
             ],
             stdout=subprocess.PIPE,
@@ -163,14 +183,22 @@ def ms_create_project(acct_mgt_url,username, password,project_uuid, displayNameS
     )
 
 
-def ms_delete_project(acct_mgt_url,username, password,project_name):
-    #result = subprocess.run(
+def ms_delete_project(acct_mgt_url, username, password, project_name):
+    # result = subprocess.run(
     #    ["curl", "-X", "DELETE", "-kv", acct_mgt_url + "/projects/" + project_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
-        ["curl", "-X", "DELETE", "-kv", "-cert", r"acct-mgt-2", acct_mgt_url + "/projects/" + project_name],
+        [
+            "curl",
+            "-X",
+            "DELETE",
+            "-kv",
+            "-cert",
+            r"acct-mgt-2",
+            acct_mgt_url + "/projects/" + project_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -179,26 +207,36 @@ def ms_delete_project(acct_mgt_url,username, password,project_name):
     )
 
 
-def ms_check_user(acct_mgt_url,username, password,user_name):
-    #result = subprocess.run(
+def ms_check_user(acct_mgt_url, username, password, user_name):
+    # result = subprocess.run(
     #    ["curl", "-X", "GET", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
-        ["curl", "-X", "GET", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
+        [
+            "curl",
+            "-X",
+            "GET",
+            "-v",
+            "-E",
+            "./client_cert/acct-mgt-2.crt",
+            "-key",
+            "./client_cert/acct-mgt-2.key",
+            acct_mgt_url + "/users/" + user_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
     return compare_results(result, r'{"msg": "user \(' + user_name + r'\) exists"}')
 
 
-def ms_create_user(acct_mgt_url,username, password,user_name):
-    #result = subprocess.run(
+def ms_create_user(acct_mgt_url, username, password, user_name):
+    # result = subprocess.run(
     #    ["curl", "-X", "PUT", "-kv", acct_mgt_url + "/users/" + user_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
         ["curl", "-X", "PUT", "-kv", acct_mgt_url + "/users/" + user_name],
         stdout=subprocess.PIPE,
@@ -207,22 +245,34 @@ def ms_create_user(acct_mgt_url,username, password,user_name):
     return compare_results(result, r'{"msg": "user created \(' + user_name + r'\)"}')
 
 
-def ms_delete_user(acct_mgt_url,username, password,user_name):
-    #result = subprocess.run(
+def ms_delete_user(acct_mgt_url, username, password, user_name):
+    # result = subprocess.run(
     #    ["curl", "-X", "DELETE", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
-        ["curl", "-X", "DELETE", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
+        [
+            "curl",
+            "-X",
+            "DELETE",
+            "-v",
+            "-E",
+            "./client_cert/acct-mgt-2.crt",
+            "-key",
+            "./client_cert/acct-mgt-2.key",
+            acct_mgt_url + "/users/" + user_name,
+        ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
     return compare_results(result, r'{"msg": "user deleted \(' + user_name + r'\)"}')
 
 
-def ms_user_project_get_role(acct_mgt_url,username, password, user_name, project_name, role, success_pattern):
-    #result = subprocess.run(
+def ms_user_project_get_role(
+    acct_mgt_url, username, password, user_name, project_name, role, success_pattern
+):
+    # result = subprocess.run(
     #    [
     #        "curl",
     #        "-X",
@@ -238,13 +288,17 @@ def ms_user_project_get_role(acct_mgt_url,username, password, user_name, project
     #    ],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
         [
             "curl",
             "-X",
             "GET",
-            "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
+            "-v",
+            "-E",
+            "./client_cert/acct-mgt-2.crt",
+            "-key",
+            "./client_cert/acct-mgt-2.key",
             acct_mgt_url
             + "/users/"
             + user_name
@@ -260,8 +314,10 @@ def ms_user_project_get_role(acct_mgt_url,username, password, user_name, project
     return compare_results(result, success_pattern)
 
 
-def ms_user_project_add_role(acct_mgt_url,username, password,user_name, project_name, role, success_pattern):
-    #result = subprocess.run(
+def ms_user_project_add_role(
+    acct_mgt_url, username, password, user_name, project_name, role, success_pattern
+):
+    # result = subprocess.run(
     #    [
     #        "curl",
     #        "-X",
@@ -277,13 +333,17 @@ def ms_user_project_add_role(acct_mgt_url,username, password,user_name, project_
     #    ],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
         [
             "curl",
             "-X",
             "PUT",
-            "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
+            "-v",
+            "-E",
+            "./client_cert/acct-mgt-2.crt",
+            "-key",
+            "./client_cert/acct-mgt-2.key",
             acct_mgt_url
             + "/users/"
             + user_name
@@ -299,8 +359,10 @@ def ms_user_project_add_role(acct_mgt_url,username, password,user_name, project_
     return compare_results(result, success_pattern)
 
 
-def ms_user_project_remove_role(acct_mgt_url,username, password, user_name, project_name, role, success_pattern):
-    #result = subprocess.run(
+def ms_user_project_remove_role(
+    acct_mgt_url, username, password, user_name, project_name, role, success_pattern
+):
+    # result = subprocess.run(
     #    [
     #        "curl",
     #        "-X",
@@ -316,13 +378,17 @@ def ms_user_project_remove_role(acct_mgt_url,username, password, user_name, proj
     #    ],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
-    #)
+    # )
     result = subprocess.run(
         [
             "curl",
             "-X",
             "DELETE",
-            "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
+            "-v",
+            "-E",
+            "./client_cert/acct-mgt-2.crt",
+            "-key",
+            "./client_cert/acct-mgt-2.key",
             acct_mgt_url
             + "/users/"
             + user_name
@@ -333,18 +399,21 @@ def ms_user_project_remove_role(acct_mgt_url,username, password, user_name, proj
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-    )    # print("--> result: "+result.stdout.decode('utf-8') +"\n\n")
+    )  # print("--> result: "+result.stdout.decode('utf-8') +"\n\n")
     return compare_results(result, success_pattern)
 
 
-def test_project(acct_mgt_url,username, password):
+def test_project(acct_mgt_url, username, password):
     result = 0
     # if(oc_resource_exist("project", "test-001",'test-001[ \t]*test-001[ \t]','Error from server (NotFound): namespaces "test-001" not found')):
     #    print("Error: test_project failed as a project with a name of test-001 exists.  Please delete first and rerun the tests\n")
     #    assertTrue(False)
 
     # test if project doesn't exist
-    check.is_false(ms_check_project(acct_mgt_url,username, password, "test-001"), "Project exists (test-001)")
+    check.is_false(
+        ms_check_project(acct_mgt_url, username, password, "test-001"),
+        "Project exists (test-001)",
+    )
 
     # test project creation
     if not oc_resource_exist(
@@ -354,7 +423,13 @@ def test_project(acct_mgt_url,username, password):
         'Error from server (NotFound): namespaces "test-001" not found',
     ):
         check.is_true(
-            ms_create_project(acct_mgt_url,username, password, "test-001", r'{"displayName":"test-001"}'),
+            ms_create_project(
+                acct_mgt_url,
+                username,
+                password,
+                "test-001",
+                r'{"displayName":"test-001"}',
+            ),
             "Project (test-001) not created",
         )
         wait_until_done(
@@ -369,7 +444,10 @@ def test_project(acct_mgt_url,username, password):
         ),
         "Project (test-001) not created",
     )
-    check.is_true(ms_check_project(acct_mgt_url,username, password, "test-001"), "project test-001 was not found")
+    check.is_true(
+        ms_check_project(acct_mgt_url, username, password, "test-001"),
+        "project test-001 was not found",
+    )
 
     # test creation of a second project with the same name
     if oc_resource_exist(
@@ -379,7 +457,13 @@ def test_project(acct_mgt_url,username, password):
         r'Error from server (NotFound): namespaces "test-001" not found',
     ):
         check.is_false(
-            ms_create_project(acct_mgt_url,username, password, "test-001", r'{"displayName":"test-001"}'),
+            ms_create_project(
+                acct_mgt_url,
+                username,
+                password,
+                "test-001",
+                r'{"displayName":"test-001"}',
+            ),
             "Project (test-001) was already created",
         )
     check.is_true(
@@ -400,7 +484,8 @@ def test_project(acct_mgt_url,username, password):
         'Error from server (NotFound): namespaces "test-001" not found',
     ):
         check.is_true(
-            ms_delete_project(acct_mgt_url,username, password, "test-001"), "Unable to delete project (test-001)"
+            ms_delete_project(acct_mgt_url, username, password, "test-001"),
+            "Unable to delete project (test-001)",
         )
         # Wait until test-001 is terminated
         wait_until_done(
@@ -425,7 +510,7 @@ def test_project(acct_mgt_url,username, password):
         'Error from server (NotFound): namespaces "test-001" not found',
     ):
         check.is_false(
-            ms_delete_project(acct_mgt_url,username, password, "test-001"),
+            ms_delete_project(acct_mgt_url, username, password, "test-001"),
             "shouldn't be able to delete a non-existing project",
         )
     check.is_false(
@@ -441,34 +526,50 @@ def test_project(acct_mgt_url,username, password):
     # these tests are primarily done to ensure that the microserver doesn't crash
     #    When the "displayName" is not present, or the json doesn't exist, the displayName shall default to the project_uuid (first parameter)
     check.is_true(
-        ms_create_project(acct_mgt_url,username, password, "1234-1234-1234-1234", r'{"displayName":"test-001"}'),
+        ms_create_project(
+            acct_mgt_url,
+            username,
+            password,
+            "1234-1234-1234-1234",
+            r'{"displayName":"test-001"}',
+        ),
         "Project (1234-1234-1234-1234) not created",
     )
-    ms_delete_project(acct_mgt_url,username, password, "1234-1234-1234-1234")
+    ms_delete_project(acct_mgt_url, username, password, "1234-1234-1234-1234")
     check.is_true(
-        ms_create_project(acct_mgt_url,username, password, "2234-1234-1234-1234", r'{"displaName":"test-001"}'),
+        ms_create_project(
+            acct_mgt_url,
+            username,
+            password,
+            "2234-1234-1234-1234",
+            r'{"displaName":"test-001"}',
+        ),
         "Project (2234-1234-1234-1234) not created",
     )
-    ms_delete_project(acct_mgt_url,username, password, "2234-1234-1234-1234")
+    ms_delete_project(acct_mgt_url, username, password, "2234-1234-1234-1234")
     check.is_true(
-        ms_create_project(acct_mgt_url,username, password, "3234-1234-1234-1234", r"{}"),
+        ms_create_project(
+            acct_mgt_url, username, password, "3234-1234-1234-1234", r"{}"
+        ),
         "Project (3234-1234-1234-1234) not created",
     )
-    ms_delete_project(acct_mgt_url,username, password, "3234-1234-1234-1234")
+    ms_delete_project(acct_mgt_url, username, password, "3234-1234-1234-1234")
     check.is_true(
-        ms_create_project(acct_mgt_url,username, password, "4234-1234-1234-1234", None),
+        ms_create_project(
+            acct_mgt_url, username, password, "4234-1234-1234-1234", None
+        ),
         "Project (4234-1234-1234-1234) not created",
     )
-    ms_delete_project(acct_mgt_url,username, password, "4234-1234-1234-1234")
+    ms_delete_project(acct_mgt_url, username, password, "4234-1234-1234-1234")
 
 
-def test_user(acct_mgt_url,username, password):
+def test_user(acct_mgt_url, username, password):
     # if(oc_resource_exist("user", "test01",r'test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01',r'Error from server (NotFound): users.user.openshift.io "test01" not found')):
     #    print("Error: test_user failed as a user with a name of test01 exists.  Please delete first and rerun the tests\n")
     #    assertTrue(False)
 
     check.is_false(
-        ms_check_user(acct_mgt_url,username, password, "test01"),
+        ms_check_user(acct_mgt_url, username, password, "test01"),
         "User test01 exists but it shouldn't exist at this point",
     )
 
@@ -480,14 +581,20 @@ def test_user(acct_mgt_url,username, password):
         r"test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01",
         r'Error from server \(NotFound\): users.user.openshift.io "test01" not found',
     ):
-        check.is_true(ms_create_user(acct_mgt_url,username, password, "test01"), "unable to create test01")
+        check.is_true(
+            ms_create_user(acct_mgt_url, username, password, "test01"),
+            "unable to create test01",
+        )
     check.is_true(
         oc_resource_exist(
             "user", "test01", r"test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01", ""
         ),
         "user test01 doesn't exist",
     )
-    check.is_true(ms_check_user(acct_mgt_url,username, password, "test01"), "User test01 doesn't exist but it should")
+    check.is_true(
+        ms_check_user(acct_mgt_url, username, password, "test01"),
+        "User test01 doesn't exist but it should",
+    )
 
     # test creation of a second user with the same name
     if oc_resource_exist(
@@ -497,7 +604,7 @@ def test_user(acct_mgt_url,username, password):
         r'Error from server \(NotFound\): users.user.openshift.io "test01" not found',
     ):
         check.is_false(
-            ms_create_user(acct_mgt_url,username, password, "test01"),
+            ms_create_user(acct_mgt_url, username, password, "test01"),
             "Should have failed to create a second user with the username of test01",
         )
     check.is_true(
@@ -514,7 +621,10 @@ def test_user(acct_mgt_url,username, password):
         r"test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01",
         r'Error from server (NotFound): users.user.openshift.io "test01" not found',
     ):
-        check.is_true(ms_delete_user(acct_mgt_url,username, password, "test01"), "user test01 deleted")
+        check.is_true(
+            ms_delete_user(acct_mgt_url, username, password, "test01"),
+            "user test01 deleted",
+        )
     check.is_false(
         oc_resource_exist(
             "user",
@@ -533,7 +643,7 @@ def test_user(acct_mgt_url,username, password):
         r'Error from server (NotFound): users.user.openshift.io "test01" not found',
     ):
         check.is_false(
-            ms_delete_user(acct_mgt_url,username, password, "test01"),
+            ms_delete_user(acct_mgt_url, username, password, "test01"),
             "shouldn't be able to delete non-existing user test01",
         )
     check.is_false(
@@ -546,12 +656,12 @@ def test_user(acct_mgt_url,username, password):
         "user test01 not found",
     )
     check.is_false(
-        ms_check_user(acct_mgt_url,username, password, "test01"),
+        ms_check_user(acct_mgt_url, username, password, "test01"),
         "User test01 exists but it shouldn't exist at this point",
     )
 
 
-def test_project_user_role(acct_mgt_url,username, password):
+def test_project_user_role(acct_mgt_url, username, password):
     # Create a project
     if not oc_resource_exist(
         "project",
@@ -560,7 +670,13 @@ def test_project_user_role(acct_mgt_url,username, password):
         r'Error from server \(NotFound\): namespaces "test-002" not found',
     ):
         check.is_true(
-            ms_create_project(acct_mgt_url,username, password, "test-002", '{"displayName":"test-002"}'),
+            ms_create_project(
+                acct_mgt_url,
+                username,
+                password,
+                "test-002",
+                '{"displayName":"test-002"}',
+            ),
             "Project (test-002) was unable to be created",
         )
     check.is_true(
@@ -584,7 +700,7 @@ def test_project_user_role(acct_mgt_url,username, password):
             + '" not found',
         ):
             check.is_true(
-                ms_create_user(acct_mgt_url,username, password, "test0" + str(x)),
+                ms_create_user(acct_mgt_url, username, password, "test0" + str(x)),
                 "Unable to create user " + "test0" + str(x),
             )
         check.is_true(
@@ -601,7 +717,10 @@ def test_project_user_role(acct_mgt_url,username, password):
 
     # now bind an admin role to the user
     check.is_false(
-        ms_user_project_get_role(acct_mgt_url,username, password, 
+        ms_user_project_get_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -609,7 +728,10 @@ def test_project_user_role(acct_mgt_url,username, password):
         )
     )
     check.is_true(
-        ms_user_project_add_role(acct_mgt_url,username, password, 
+        ms_user_project_add_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -624,7 +746,10 @@ def test_project_user_role(acct_mgt_url,username, password):
         "role does not exist",
     )
     check.is_true(
-        ms_user_project_get_role(acct_mgt_url,username, password, 
+        ms_user_project_get_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -633,7 +758,10 @@ def test_project_user_role(acct_mgt_url,username, password):
     )
 
     check.is_true(
-        ms_user_project_add_role(acct_mgt_url,username, password, 
+        ms_user_project_add_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -643,7 +771,10 @@ def test_project_user_role(acct_mgt_url,username, password):
     )
 
     check.is_true(
-        ms_user_project_remove_role(acct_mgt_url,username, password, 
+        ms_user_project_remove_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -659,7 +790,10 @@ def test_project_user_role(acct_mgt_url,username, password):
     )
 
     check.is_true(
-        ms_user_project_remove_role(acct_mgt_url,username, password, 
+        ms_user_project_remove_role(
+            acct_mgt_url,
+            username,
+            password,
             "test02",
             "test-002",
             "admin",
@@ -669,7 +803,10 @@ def test_project_user_role(acct_mgt_url,username, password):
     )
 
     # Clean up by removing the users and project (test-002)
-    check.is_true(ms_delete_project(acct_mgt_url,username, password, "test-002") == True, "project (test-002) deleted")
+    check.is_true(
+        ms_delete_project(acct_mgt_url, username, password, "test-002") == True,
+        "project (test-002) deleted",
+    )
     for x in range(2, 6):
         if oc_resource_exist(
             "user",
@@ -680,7 +817,8 @@ def test_project_user_role(acct_mgt_url,username, password):
             + '" not found',
         ):
             check.is_true(
-                ms_delete_user(acct_mgt_url,username, password, "test0" + str(x)) == True,
+                ms_delete_user(acct_mgt_url, username, password, "test0" + str(x))
+                == True,
                 "user " + "test0" + str(x) + "unable to be deleted",
             )
 
