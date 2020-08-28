@@ -381,22 +381,52 @@ def oc_create_service(project, port=8080):
     proc.communicate(json_str.encode())
 
 
-def get_route_def(project, microserver_url, ext_service):
+def oc_route_exists(project, route, host_subdomain):
+    result = subprocess.run(
+        ["oc", "-n", project, "-o", "json", "get", "route", route],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    if result.returncode == 0:
+        result_json = json.loads(result.stdout.decode("utf-8"))
+        if (
+            result_json["kind"] == "Project"
+            and result_json["metadata"]["name"] == route
+        ):
+            return True
+    return False
+
+
+def get_route_def(project, route, microserver_url, service):
     route = {
         "apiVersion": "v1",
         "kind": "Route",
         "metadata": {
-            "name": project,
+            "name": route,
             "namespace": project,
             "labels": {"app": "nginx-proxy"},
         },
         "spec": {
-            "host": project + "." + microserver_url,
+            "host": route + "." + microserver_url,
             "port": {"targetPort": "7443-tcp"},
             "tls": {"termination": "passthrough"},
-            "to": {"kind": "Service", "name": ext_service, "weight": 100},
+            "to": {"kind": "Service", "name": service, "weight": 100},
         },
     }
+
+
+def oc_create_route(project, route, microserver_url, service):
+    proc = subprocess.Popen(
+        ["oc", "create", "-f", "-"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
+    )
+    r = get_route_def(project, route, microserver_url, service)
+    print("\n\n")
+    print(r.encode())
+    print("\n\n")
+    proc.communicate(r.encode())
 
 
 def get_pass_configmap(project, cm_name, username, password):
@@ -436,10 +466,8 @@ def create_objects(openshift_url, project, service, docker_image, username, pass
         oc_create_service_account(project, project + "-sa", "cluster-admin")
     if not oc_service_exists(project, service):
         oc_create_service(project, service)
-
-    # if not oc_route_exists(project, microserver_url, ext_service):
-    #    oc_create_route()
-
+    if not oc_route_exists(project, project, microserver_url):
+        oc_create_route(project, project, microserver_url, project)
     cm_name = "admin-pass"
     # if oc_cm_pass_exists(project, cm_name):
     #    oc_delete_configmap(project, cm_name)
