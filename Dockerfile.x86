@@ -1,7 +1,4 @@
-# docker build -t docker.io/robertbartlettbaron/acct-req .
-# docker run docker.io/robertbartlettbaron/acct-req
-# docker push "docker.io/robertbartlettbaron/acct-req"
-#FROM registry.redhat.io/rhel  
+# FROM registry.redhat.io/rhel  
 # FROM centos7
 FROM fedora:30
 
@@ -13,32 +10,31 @@ FROM fedora:30
 
 WORKDIR /app
 
-RUN yum install -y cpan
 
 RUN rpm --initdb \
- && yum clean all 
- 
-RUN yum -y install make gcc libffi-devel openssl-devel bzip2-devel wget wireshark git python3 httpd httpd-devel httpd-tools  python3-devel python3-pip \ 
-  && pip3 install --upgrade pip \
-  && pip3 install setuptools \
-  && pip3 install mod_wsgi
+ && yum clean all \
+ && yum -y install make gcc libffi-devel openssl-devel bzip2-devel wget wireshark git python3 httpd httpd-devel httpd-tools  python3-devel python3-pip \ 
+ && pip3 install --upgrade pip \
+ && pip3 install setuptools \
+ && pip3 install mod_wsgi \
+ && pip3 install Flask-HTTPAuth \
+ && yum install -y cpan
 
 COPY wsgi.py /app/openshift-acct-mgt/wsgi.py
-copy openshift_user.py /app/openshift-acct-mgt/openshift_user.py
-copy openshift_identity.py /app/openshift-acct-mgt/openshift_identity.py
-copy openshift_rolebindings.py /app/openshift-acct-mgt/openshift_rolebindings.py
-copy openshift_project.py /app/openshift-acct-mgt/openshift_project.py
-copy openshift_role.py /app/openshift-acct-mgt/openshift_role.py
+COPY openshift_user.py /app/openshift-acct-mgt/openshift_user.py
+COPY openshift_identity.py /app/openshift-acct-mgt/openshift_identity.py
+COPY openshift_rolebindings.py /app/openshift-acct-mgt/openshift_rolebindings.py
+COPY openshift_project.py /app/openshift-acct-mgt/openshift_project.py
+COPY openshift_role.py /app/openshift-acct-mgt/openshift_role.py
 
 COPY start.sh /app/openshift-acct-mgt/start.sh
 COPY requirements.txt /app/openshift-acct-mgt/requirements.txt
 COPY config.py /app/openshift-acct-mgt/config.py
 
 RUN cd /app/openshift-acct-mgt \
-  && pip3 install -r requirements.txt
-
-RUN chmod -R 777 /app
-RUN chmod -R 777 /usr
+ && pip3 install -r requirements.txt \
+ && chmod -R 777 /app \
+ && chmod -R 777 /usr
 
 
 # Note(knikolla): This is required to support the random
@@ -59,5 +55,5 @@ EXPOSE 8080 8443
 USER 1001
 
 WORKDIR /app/openshift-acct-mgt
-# CMD ["/app/openshift-acct-mgt/start.sh"]
+CMD ["/app/openshift-acct-mgt/start.sh"]
 
