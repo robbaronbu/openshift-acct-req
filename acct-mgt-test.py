@@ -8,7 +8,7 @@
 #
 #    2) call curl with
 #       curl -v -k -E ./client.p12:password http://url...
-#  python3 -m pytest acct-mgt-test.py --amurl https://acct-mgt-acct-mgt.apps.cnv.massopen.cloud --user [username] --passwd [password]
+#  python3 -m pytest acct-mgt-test.py --amurl acct-mgt.apps.cnv.massopen.cloud --user [username] --passwd [password]
 import subprocess
 import re
 import time
@@ -62,6 +62,7 @@ def user(user_name, op, success_pattern):
     #    stderr=subprocess.STDOUT,
     # )
     result = subprocess.run(
+        # ["curl", "-X", op, "-kv", "-cert", r"acct-mgt-2", url + "/users/" + user_name],
         ["curl", "-X", op, "-kv", "-cert", r"acct-mgt-2", url + "/users/" + user_name],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
