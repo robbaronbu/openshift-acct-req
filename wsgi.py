@@ -14,7 +14,8 @@ import sys
 
 from openshift import *
 from openshift_rolebindings import *
-#from openshift_project import *
+
+# from openshift_project import *
 from openshift_identity import *
 from openshift_user import *
 
@@ -26,24 +27,27 @@ if __name__ != "__main__":
     application.logger.handlers = gunicorn_logger.handlers
     application.logger.setLevel(gunicorn_logger.level)
 
+
 def get_token_and_url():
-    return ("dummy","dummy")
+    return ("dummy", "dummy")
+
 
 def get_openshift():
     version = os.environ["OPENSHIFT_VERSION"]
     url = os.environ["OPENSHIFT_URL"]
-    if version==3:
-        shift = openshift_3_x(url,version,application.logger)
+    if version == 3:
+        shift = openshift_3_x(url, version, application.logger)
         application.logger.info("using Openshift ver 3")
     else:
-        shift = openshift_4_x(url,version,application.logger)
+        shift = openshift_4_x(url, version, application.logger)
         application.logger.info("using Openshift ver 4")
     with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as file:
         token = file.read()
         shift.set_token(token)
-        application.logger.info("Attached token to shift")        
+        application.logger.info("Attached token to shift")
         return shift
     return None
+
 
 @auth.verify_password
 def verify_password(username, password):

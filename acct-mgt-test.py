@@ -275,7 +275,7 @@ def ms_delete_user(acct_mgt_url, username, password, user_name):
 
 
 def ms_user_project_get_role(
-    acct_mgt_url, username, basci_auth,cert, project_name, role, success_pattern
+    acct_mgt_url, username, basci_auth, cert, project_name, role, success_pattern
 ):
     # result = subprocess.run(
     #    [
@@ -320,11 +320,11 @@ def ms_user_project_get_role(
 
 
 def ms_user_project_add_role(
-    acct_mgt_url, basci_auth,cert, user_name, project_name, role, success_pattern
+    acct_mgt_url, basci_auth, cert, user_name, project_name, role, success_pattern
 ):
-    up=basic_auth.split(':')
-    username=up[0]
-    password=up[1]
+    up = basic_auth.split(":")
+    username = up[0]
+    password = up[1]
     # result = subprocess.run(
     #    [
     #        "curl",
@@ -368,11 +368,11 @@ def ms_user_project_add_role(
 
 
 def ms_user_project_remove_role(
-    acct_mgt_url, basci_auth,cert, user_name, project_name, role, success_pattern
+    acct_mgt_url, basci_auth, cert, user_name, project_name, role, success_pattern
 ):
-    up=basic_auth.split(':')
-    username=up[0]
-    password=up[1]    # result = subprocess.run(
+    up = basic_auth.split(":")
+    username = up[0]
+    password = up[1]  # result = subprocess.run(
     #    [
     #        "curl",
     #        "-X",
@@ -413,10 +413,10 @@ def ms_user_project_remove_role(
     return compare_results(result, success_pattern)
 
 
-def test_project(acct_mgt_url, basic_auth,cert):
-    up=basic_auth.split(':')
-    username=up[0]
-    password=up[1]    
+def test_project(acct_mgt_url, basic_auth, cert):
+    up = basic_auth.split(":")
+    username = up[0]
+    password = up[1]
     result = 0
     # if(oc_resource_exist("project", "test-001",'test-001[ \t]*test-001[ \t]','Error from server (NotFound): namespaces "test-001" not found')):
     #    print("Error: test_project failed as a project with a name of test-001 exists.  Please delete first and rerun the tests\n")
@@ -576,10 +576,10 @@ def test_project(acct_mgt_url, basic_auth,cert):
     ms_delete_project(acct_mgt_url, username, password, "4234-1234-1234-1234")
 
 
-def test_user(acct_mgt_url, basic_auth,cert):
-    up=basic_auth.split(':')
-    username=up[0]
-    password=up[1]
+def test_user(acct_mgt_url, basic_auth, cert):
+    up = basic_auth.split(":")
+    username = up[0]
+    password = up[1]
     # if(oc_resource_exist("user", "test01",r'test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01',r'Error from server (NotFound): users.user.openshift.io "test01" not found')):
     #    print("Error: test_user failed as a user with a name of test01 exists.  Please delete first and rerun the tests\n")
     #    assertTrue(False)
@@ -677,10 +677,10 @@ def test_user(acct_mgt_url, basic_auth,cert):
     )
 
 
-def test_project_user_role(acct_mgt_url, basic_auth,cert):
-    up=basic_auth.split(':')
-    username=up[0]
-    password=up[1]
+def test_project_user_role(acct_mgt_url, basic_auth, cert):
+    up = basic_auth.split(":")
+    username = up[0]
+    password = up[1]
     # Create a project
     if not oc_resource_exist(
         "project",
