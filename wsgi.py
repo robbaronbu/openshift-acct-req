@@ -12,8 +12,9 @@ from flask_httpauth import HTTPBasicAuth
 
 import sys
 
+from openshift import *
 from openshift_rolebindings import *
-from openshift_project import *
+#from openshift_project import *
 from openshift_identity import *
 from openshift_user import *
 
@@ -25,19 +26,24 @@ if __name__ != "__main__":
     application.logger.handlers = gunicorn_logger.handlers
     application.logger.setLevel(gunicorn_logger.level)
 
+def get_token_and_url():
+    return ("dummy","dummy")
 
-def get_user_token():
+def get_openshift():
+    version = os.environ["OPENSHIFT_VERSION"]
+    url = os.environ["OPENSHIFT_URL"]
+    if version==3:
+        shift = openshift_3_x(url,version,application.logger)
+        application.logger.info("using Openshift ver 3")
+    else:
+        shift = openshift_4_x(url,version,application.logger)
+        application.logger.info("using Openshift ver 4")
     with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as file:
         token = file.read()
-        return token
-    return ""
-
-
-def get_token_and_url():
-    token = get_user_token()
-    openshift_url = os.environ["OPENSHIFT_URL"]
-    return (token, openshift_url)
-
+        shift.set_token(token)
+        application.logger.info("Attached token to shift")        
+        return shift
+    return None
 
 @auth.verify_password
 def verify_password(username, password):
@@ -120,8 +126,8 @@ def delete_moc_rolebindings(project_name, user_name, role):
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["GET"])
 # @auth.login_required
 def get_moc_project(project_uuid, user_name=None):
-    (token, openshift_url) = get_token_and_url()
-    if exists_openshift_project(token, openshift_url, project_uuid):
+    shift = get_openshift()
+    if shift.project_exists(project_uuid):
         return Response(
             response=json.dumps({"msg": "project exists (" + project_uuid + ")"}),
             status=200,
@@ -138,9 +144,9 @@ def get_moc_project(project_uuid, user_name=None):
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["PUT"])
 # @auth.login_required
 def create_moc_project(project_uuid, user_name=None):
-    (token, openshift_url) = get_token_and_url()
+    shift = get_openshift()
     # first check the project_name is a valid openshift project name
-    suggested_project_name = cnvt_project_name(project_uuid)
+    suggested_project_name = shift.cnvt_project_name(project_uuid)
     if project_uuid != suggested_project_name:
         # future work, handel colisons by suggesting a different valid
         # project name
@@ -154,7 +160,7 @@ def create_moc_project(project_uuid, user_name=None):
             status=400,
             mimetype="application/json",
         )
-    if not exists_openshift_project(token, openshift_url, project_uuid):
+    if not shift.project_exists(project_uuid):
         project_name = project_uuid
         if "Content-Length" in request.headers:
             req_json = request.get_json(force=True)
@@ -164,9 +170,7 @@ def create_moc_project(project_uuid, user_name=None):
         else:
             application.logger.debug("create project json: None")
 
-        r = create_openshift_project(
-            token, openshift_url, project_uuid, project_name, user_name
-        )
+        r = shift.create_project(project_uuid, project_name, user_name)
         if r.status_code == 200 or r.status_code == 201:
             return Response(
                 response=json.dumps({"msg": "project created (" + project_uuid + ")"}),
@@ -191,9 +195,9 @@ def create_moc_project(project_uuid, user_name=None):
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["DELETE"])
 # @auth.login_required
 def delete_moc_project(project_uuid, user_name=None):
-    (token, openshift_url) = get_token_and_url()
-    if exists_openshift_project(token, openshift_url, project_uuid):
-        r = delete_openshift_project(token, openshift_url, project_uuid, user_name)
+    shift = get_openshift()
+    if shift.project_exists(project_uuid):
+        r = shift.delete_project(project_uuid, user_name)
         if r.status_code == 200 or r.status_code == 201:
             return Response(
                 response=json.dumps({"msg": "project deleted (" + project_uuid + ")"}),
