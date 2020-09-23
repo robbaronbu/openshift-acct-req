@@ -22,7 +22,7 @@ def basic_auth(request):
 
 
 @pytest.fixture(scope="session")
-def password(request):
+def cert(request):
     cert_value = request.config.option.cert
     return cert_value
 
@@ -33,8 +33,7 @@ def pytest_generate_tests(metafunc):
     option_value = metafunc.config.option.amurl
     if "amurl" in metafunc.fixturenames and option_value is not None:
         metafunc.parametrize("acct_mgt_url", [option_value])
-    option_value = metafunc.config.option.user_passwd
-    metafunc.parametrize("username", [option_value])
-    metafunc.parametrize("password", [option_value])
+    option_value = metafunc.config.option.basic
+    metafunc.parametrize("basic_auth", [option_value])
     option_value = metafunc.config.option.cert
     metafunc.parametrize("cert", [option_value])
