@@ -20,13 +20,13 @@ def usage_msg():
 
         Usage: 
 
-        build.py [project] [service] [openshift's app url] [openshift's api url] [docker_file] [docker_image] [opt username] [opt password]
+        build.py [project] [service] [openshift's app url] [openshift's api url] [openshift_version] [docker_file] [docker_image] [opt username] [opt password]
 
         Examples:
 
-        build.py "acct-mgt-2" "acct-mgt" s-apps.osh.massopen.cloud "s-openshift.osh.massopen.cloud:8443" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest"
-        build.py "acct-mgt" "acct-mgt" k-apps.osh.massopen.cloud "k-openshift.osh.massopen.cloud:8443" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
-        build.py "acct-mgt" "acct-mgt" "apps.cnv.massopen.cloud" "api.cnv.massopen.cloud:6443" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
+        build.py "acct-mgt-2" "acct-mgt" s-apps.osh.massopen.cloud "s-openshift.osh.massopen.cloud:8443" "3.11" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest"
+        build.py "acct-mgt" "acct-mgt" k-apps.osh.massopen.cloud "k-openshift.osh.massopen.cloud:8443" "3.11" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
+        build.py "acct-mgt" "acct-mgt" "apps.cnv.massopen.cloud" "api.cnv.massopen.cloud:6443" "4.5" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
     """
     )
 
@@ -159,7 +159,8 @@ def oc_create_service_account(project, service_account, cluster_role):
         #    pprint.pprint(result_json)
         # else:
         #    pprint.pprint(result)
-    if not oc_sa_role_exists(project, service_account, cluster_role):
+    # short circuit this for testing
+    if True or not oc_sa_role_exists(project, service_account, cluster_role):
         result = subprocess.run(
             [
                 "oc",
@@ -233,7 +234,7 @@ def oc_dc_exists(project, dc):
     return False
 
 
-def get_dc_def(openshift_url, project, docker_image, configmap_name):
+def get_dc_def(openshift_url, openshift_version, project, docker_image, configmap_name):
     dc = ""
     if (
         openshift_url is not None
@@ -271,7 +272,8 @@ def get_dc_def(openshift_url, project, docker_image, configmap_name):
                         "containers": [
                             {
                                 "env": [
-                                    {"name": "OPENSHIFT_URL", "value": openshift_url}
+                                    {"name": "OPENSHIFT_URL", "value": openshift_url},
+                                    {"name": "OPENSHIFT_VERSION", "value": openshift_version},
                                 ],
                                 "image": docker_image,
                                 "imagePullPolicy": "Always",
@@ -287,6 +289,12 @@ def get_dc_def(openshift_url, project, docker_image, configmap_name):
                                         "readOnly": True,
                                     },
                                 ],
+                                "ports" : [
+                                    { 
+                                    "containerPort": 8080, 
+                                    "protocol": "TCP"
+                                    }
+                                ]
                             }
                         ],
                         "dnsPolicy": "ClusterFirst",
@@ -309,7 +317,14 @@ def get_dc_def(openshift_url, project, docker_image, configmap_name):
                             "description": "The OpenShift Master URL - because openshift pods don't know their master",
                             "required": True,
                             "value": openshift_url,
-                        }
+                        },
+                        {
+                            "name": "OPENSHIFT_VERSION",
+                            "displayName": "OpenShift URL",
+                            "description": "The OpenShift Master URL - because openshift pods don't know their master",
+                            "required": True,
+                            "value": openshift_version,
+                        },
                     ],
                 },
                 "test": False,
@@ -335,14 +350,14 @@ def get_dc_def(openshift_url, project, docker_image, configmap_name):
 # - name: acct-mgt-2-sa-dockercfg-vm58v
 
 
-def oc_create_dc(openshift_url, project, docker_image, configmap_name):
+def oc_create_dc(openshift_url, openshift_version, project, docker_image, configmap_name):
     proc = subprocess.Popen(
         ["oc", "create", "-f", "-"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         stdin=subprocess.PIPE,
     )
-    dc = get_dc_def(openshift_url, project, docker_image, configmap_name)
+    dc = get_dc_def(openshift_url, openshift_version, project, docker_image, configmap_name)
     print(dc)
     proc.communicate(dc.encode())
 
@@ -353,12 +368,11 @@ def get_svc_def(project, service, port=8080):
         svc = {
             "kind": "Service",
             "apiVersion": "v1",
-            "metadata": {"name": service, "namespace": project},
+            "metadata": { "name": service, "namespace": project },
             "spec": {
-                "ports": [{"protocol": "TCP", "port": 80, "targetPort": port,}],
-                "type": "LoadBalancer",
-                "externalTrafficPolicy": "Cluster",
-                "selector": {"app": project, "deploymentconfig": project},
+                "ports": [{ "protocol": "TCP", "port": 80, "targetPort": port }],
+                "type": "ClusterIP",
+                "selector": { "app": project, "deploymentconfig": project },
             },
         }
     return json.dumps(svc)
@@ -401,8 +415,24 @@ def get_route_def(project, route, app_url, service):
         "metadata": {"name": route, "namespace": project, "labels": {"app": project},},
         "spec": {
             "host": route + "." + app_url,
-            "port": {"targetPort": "7443-tcp"},
+            # 3.x target port = 7443-tcp
+            # 4.x target port = 7443
+            "port": {"targetPort": "7443"},
             "tls": {"termination": "edge"},
+            "to": {"kind": "Service", "name": service, "weight": 100},
+        },
+    }
+    return json.dumps(route)
+
+
+def get_route2_def(project, route, app_url, service):
+    route = {
+        "apiVersion": "v1",
+        "kind": "Route",
+        "metadata": {"name": route, "namespace": project, "labels": {"app": project},},
+        "spec": {
+            "host": route + "." + app_url,
+            "port": {"targetPort": 8080},
             "to": {"kind": "Service", "name": service, "weight": 100},
         },
     }
@@ -421,6 +451,20 @@ def oc_create_route(project, route, app_url, service):
     print(r.encode())
     print("\n\n")
     proc.communicate(r.encode())
+
+    proc = subprocess.Popen(
+        ["oc", "create", "-f", "-"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
+    )
+    r = get_route2_def(project, "am2", app_url, service)
+    print("\n\n")
+    print(r.encode())
+    print("\n\n")
+    proc.communicate(r.encode())
+
+
 
 
 def get_pass_configmap(project, cm_name, username, password):
@@ -452,7 +496,7 @@ def oc_create_cm_pass(project, cm_name, username, password):
 
 
 def create_objects(
-    openshift_url, app_url, project, service, docker_image, username, password
+    openshift_url, openshift_version, app_url, project, service, docker_image, username, password
 ):
     if not oc_project_exists(project):
         oc_create_project(project)
@@ -470,7 +514,7 @@ def create_objects(
     oc_create_cm_pass(project, cm_name, username, password)
 
     if not oc_dc_exists(project, project):
-        oc_create_dc(openshift_url, project, docker_image, cm_name)
+        oc_create_dc(openshift_url, openshift_version, project, docker_image, cm_name)
     else:
         oc_rollout_dc(project, project)
 
@@ -479,20 +523,22 @@ def main():
     # TODO: make the commandline interface more reasonable
     #      1) doing a docker build should be optional
     #      2) generating all of the certificates should be optional
-    if not (len(sys.argv) in [7, 9]):
+    if not (len(sys.argv) in [8, 10]):
+        print(len(sys.argv))
         usage_msg()
     else:
         project = str(sys.argv[1])
         service = str(sys.argv[2])
         app_url = str(sys.argv[3])
         openshift_url = str(sys.argv[4])
-        docker_file = str(sys.argv[5])
-        docker_image = str(sys.argv[6])
+        openshift_version=str(sys.argv[5])
+        docker_file = str(sys.argv[6])
+        docker_image = str(sys.argv[7])
         username = ""
         password = ""
-        if len(sys.argv) == 9:
-            username = str(sys.argv[7])
-            password = str(sys.argv[8])
+        if len(sys.argv) == 10:
+            username = str(sys.argv[8])
+            password = str(sys.argv[9])
 
         build_docker_image(docker_file, docker_image)
 
@@ -504,7 +550,7 @@ def main():
             oc_create_project(project)
 
         create_objects(
-            openshift_url, app_url, project, service, docker_image, username, password
+            openshift_url, openshift_version, app_url, project, service, docker_image, username, password
         )
 
 
