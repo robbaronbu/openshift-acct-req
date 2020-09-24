@@ -78,12 +78,6 @@ class openshift_3_x(openshift):
             return True
         return False
 
-    def delete_project(self, project_name):
-        # check project_name
-        url = "https://" + self.get_url() + "/oapi/v1/projects/" + project_name
-        r = self.del_request(url, True)
-        return r
-
     def create_project(self, project_name, user_name):
         # check project_name
         url = "https://" + self.get_url() + "/oapi/v1/projects"
@@ -101,7 +95,35 @@ class openshift_3_x(openshift):
         r = self.post_request(url, json.dumps(payload))
         return r
 
+    def delete_project(self, project_name):
+        # check project_name
+        url = "https://" + self.get_url() + "/oapi/v1/projects/" + project_name
+        r = self.del_request(url, True)
+        return r
+
     # member functions for users
+    def exists_openshift_user(token, api_url, user_name):
+        url = "https://" + api_url + "/oapi/v1/users/" + user_name
+        r = self.get_request(url, True)
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_openshift_user(token, api_url, user_name, full_name):
+        url = "https://" + api_url + "/oapi/v1/users"
+        payload = {
+            "kind": "User",
+            "apiVersion": "v1",
+            "metadata": {"name": user_name},
+            "fullName": full_name,
+        }
+        r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
+        return r
+
+    def delete_openshift_user(token, api_url, user_name, full_name):
+        url = "https://" + api_url + "/oapi/v1/users/" + user_name
+        r = self.del_request(url, True)
+        return r
 
     # member functions to associate roles for users on projects
 
@@ -121,17 +143,6 @@ class openshift_4_x(openshift):
             return True
         return False
 
-    def delete_project(self, project_name):
-        # check project_name
-        url = (
-            "https://"
-            + self.get_url()
-            + "/apis/project.openshift.io/v1/projects/"
-            + project_name
-        )
-        r = self.del_request(url, True)
-        return r
-
     def create_project(self, short_name, project_name, user_name):
         # check project_name
         url = "https://" + self.get_url() + "/apis/project.openshift.io/v1/projects/"
@@ -146,9 +157,42 @@ class openshift_4_x(openshift):
                 },
             },
         }
-        r = self.post_request(url, json.dumps(payload), True)
+        r = self.post_request(url, json.dumps(payload))
+        return r
+
+    def delete_project(self, project_name):
+        # check project_name
+        url = (
+            "https://"
+            + self.get_url()
+            + "/apis/project.openshift.io/v1/projects/"
+            + project_name
+        )
+        r = self.del_request(url, True)
         return r
 
     # member functions for users
+    def user_exists(token, api_url, user_name):
+        url = "https://" + api_url + "/apis/user.openshift.io/v1/users" + user_name
+        r = self.get_request(url, True)
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_user(token, api_url, user_name, full_name):
+        url = "https://" + api_url + "/apis/user.openshift.io/v1/users"
+        payload = {
+            "kind": "User",
+            "apiVersion": "v1",
+            "metadata": {"name": user_name},
+            "fullName": full_name,
+        }
+        r = self.post_request(url, json.dumps(payload))
+        return r
+
+    def delete_user(token, api_url, user_name, full_name):
+        url = "https://" + api_url + "/apis/user.openshift.io/v1/users" + user_name
+        r = self.del_request(url, True)
+        return r
 
     # member functions to associate roles for users on projects
