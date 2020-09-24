@@ -1,5 +1,5 @@
-setuptools>=18.5
+flask
 gunicorn
-Flask
 kubernetes
 openshift
+flask_httpauth
