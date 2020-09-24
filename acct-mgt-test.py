@@ -9,10 +9,20 @@
 #    2) call curl with
 #       curl -v -k -E ./client.p12:password http://url...
 #
+#    3) auth_opts can be of the following:
+#
+#          auth_ops = ["-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key"]
+#          auth_ops = ["-cert", r"acct-mgt-2",]
+#
 # Initial test to confirm that something is working
 #    curl -kv https://acct-mgt.apps.cnv.massopen.cloud/projects/acct-mgt
 #
-#  python3 -m pytest acct-mgt-test.py --amurl acct-mgt.apps.cnv.massopen.cloud --basic [username]:[password]
+#  python3 -m pytest acct-mgt-test.py --amurl https://acct-mgt.apps.cnv.massopen.cloud --basic [username]:[password]
+#
+#  --Only for testing:
+#      python3 -m pytest acct-mgt-test.py --amurl http://am2.apps.cnv.massopen.cloud
+#
+#
 import subprocess
 import re
 import time
@@ -105,25 +115,18 @@ def oc_resource_exist(resource, kind, name, project=None):
     return False
 
 
-def ms_check_project(acct_mgt_url, username, password, project_name):
+def ms_check_project(acct_mgt_url, username, password, project_name, auth_opts=[]):
     # result = subprocess.run(
     #    ["curl", "-X", "GET", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/projects/" + project_name],
     #    stdout=subprocess.PIPE,
     #    stderr=subprocess.STDOUT,
     # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "GET",
-            "-kv",
-            "-cert",
-            r"acct-mgt-2",
-            acct_mgt_url + "/projects/" + project_name,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+    cmd = (
+        ["curl", "-X", "GET", "-kv"]
+        + auth_ops
+        + [acct_mgt_url + "/projects/" + project_name]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     # {"msg": "project exists (test-001)"}
     # print("\n\n***** result: "+result.stdout.decode('utf-8') +"\n\n")
     return compare_results(
@@ -134,114 +137,52 @@ def ms_check_project(acct_mgt_url, username, password, project_name):
 # expect this to be called with
 #  project_uuid="1234-1234-1234-1234"
 #  displayNameStr=None | '{"displayName":"project_name"}' | '{"funkyName":"project_name"}'
-def ms_create_project(acct_mgt_url, username, password, project_uuid, displayNameStr):
+def ms_create_project(
+    acct_mgt_url, username, password, project_uuid, displayNameStr, auth_opts=[]
+):
     if displayNameStr is None:
-        # result = subprocess.run(
-        #    ["curl", "-X", "PUT", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/projects/" + project_uuid],
-        #    stdout=subprocess.PIPE,
-        #    stderr=subprocess.STDOUT,
-        # )
-        result = subprocess.run(
-            [
-                "curl",
-                "-X",
-                "PUT",
-                "-kv",
-                "-cert",
-                r"acct-mgt-2",
-                acct_mgt_url + "/projects/" + project_uuid,
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+        cmd = (
+            ["curl", "-X", "PUT", "-kv",]
+            + auth_opts
+            + [acct_mgt_url + "/projects/" + project_uuid]
         )
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     else:
-        # result = subprocess.run(
-        #    [
-        #        "curl",
-        #        "-X",
-        #        "PUT",
-        #        "-d",
-        #        displayNameStr,
-        #        "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
-        #        acct_mgt_url + "/projects/" + project_uuid,
-        #    ],
-        #    stdout=subprocess.PIPE,
-        #    stderr=subprocess.STDOUT,
-        # )
-        result = subprocess.run(
-            [
-                "curl",
-                "-X",
-                "PUT",
-                "-d",
-                displayNameStr,
-                "-kv",
-                "-cert",
-                r"acct-mgt-2",
-                acct_mgt_url + "/projects/" + project_uuid,
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+        cmd = (
+            ["curl", "-X", "PUT", "-kv", "-d", displayNameStr,]
+            + auth_opts
+            + [acct_mgt_url + "/projects/" + project_uuid]
         )
+        result = subprocess.run(cnd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     return compare_results(
         result, r'{"msg": "project created \(' + project_uuid + r'\)"}'
     )
 
 
-def ms_delete_project(acct_mgt_url, username, password, project_name):
-    # result = subprocess.run(
-    #    ["curl", "-X", "DELETE", "-kv", acct_mgt_url + "/projects/" + project_name],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "DELETE",
-            "-kv",
-            "-cert",
-            r"acct-mgt-2",
-            acct_mgt_url + "/projects/" + project_name,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+def ms_delete_project(acct_mgt_url, username, password, project_name, auth_opts=[]):
+    cmd = (
+        ["curl", "-X", "DELETE", "-kv"]
+        + auth_opts
+        + [acct_mgt_url + "/projects/" + project_name]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     return compare_results(
         result, r'{"msg": "project deleted \(' + project_name + r'\)"}'
     )
 
 
-def ms_check_user(acct_mgt_url, username, password, user_name):
-    # result = subprocess.run(
-    #    ["curl", "-X", "GET", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "GET",
-            "-v",
-            "-E",
-            "./client_cert/acct-mgt-2.crt",
-            "-key",
-            "./client_cert/acct-mgt-2.key",
-            acct_mgt_url + "/users/" + user_name,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+def ms_check_user(acct_mgt_url, username, password, user_name, auth_opts=[]):
+    cmd = (
+        ["curl", "-X", "GET", "-v", "-E"]
+        + auth_opts
+        + [acct_mgt_url + "/users/" + user_name]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     return compare_results(result, r'{"msg": "user \(' + user_name + r'\) exists"}')
 
 
-def ms_create_user(acct_mgt_url, username, password, user_name):
-    # result = subprocess.run(
-    #    ["curl", "-X", "PUT", "-kv", acct_mgt_url + "/users/" + user_name],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
+def ms_create_user(acct_mgt_url, username, password, user_name, auth_opts=[]):
+
     result = subprocess.run(
         ["curl", "-X", "PUT", "-kv", acct_mgt_url + "/users/" + user_name],
         stdout=subprocess.PIPE,
@@ -250,165 +191,86 @@ def ms_create_user(acct_mgt_url, username, password, user_name):
     return compare_results(result, r'{"msg": "user created \(' + user_name + r'\)"}')
 
 
-def ms_delete_user(acct_mgt_url, username, password, user_name):
-    # result = subprocess.run(
-    #    ["curl", "-X", "DELETE", "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key", acct_mgt_url + "/users/" + user_name],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "DELETE",
-            "-v",
-            "-E",
-            "./client_cert/acct-mgt-2.crt",
-            "-key",
-            "./client_cert/acct-mgt-2.key",
-            acct_mgt_url + "/users/" + user_name,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+def ms_delete_user(acct_mgt_url, username, password, user_name, auth_opts=[]):
+    cmd = (
+        ["curl", "-X", "DELETE", "-v"]
+        + auth_opts
+        + [acct_mgt_url + "/users/" + user_name]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     return compare_results(result, r'{"msg": "user deleted \(' + user_name + r'\)"}')
 
 
 def ms_user_project_get_role(
-    acct_mgt_url, username, basci_auth, cert, project_name, role, success_pattern
+    acct_mgt_url,
+    username,
+    basci_auth,
+    cert,
+    project_name,
+    role,
+    success_pattern,
+    auth_opts=[],
 ):
-    # result = subprocess.run(
-    #    [
-    #        "curl",
-    #        "-X",
-    #        "GET",
-    #        "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
-    #        acct_mgt_url
-    #        + "/users/"
-    #        + user_name
-    #        + "/projects/"
-    #        + project_name
-    #        + "/roles/"
-    #        + role,
-    #    ],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "GET",
-            "-v",
-            "-E",
-            "./client_cert/acct-mgt-2.crt",
-            "-key",
-            "./client_cert/acct-mgt-2.key",
+    cmd = (
+        ["curl", "-X", "GET", "-v",]
+        + auth_opts
+        + [
             acct_mgt_url
             + "/users/"
             + user_name
             + "/projects/"
             + project_name
             + "/roles/"
-            + role,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+            + role
+        ]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     print("get role --> result: " + result.stdout.decode("utf-8") + "\n\n")
     return compare_results(result, success_pattern)
 
 
 def ms_user_project_add_role(
-    acct_mgt_url, basci_auth, cert, user_name, project_name, role, success_pattern
+    acct_mgt_url, user_name, project_name, role, success_pattern, auth_opts=[]
 ):
-    up = basic_auth.split(":")
-    username = up[0]
-    password = up[1]
-    # result = subprocess.run(
-    #    [
-    #        "curl",
-    #        "-X",
-    #        "PUT",
-    #        "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
-    #        acct_mgt_url
-    #        + "/users/"
-    #        + user_name
-    #        + "/projects/"
-    #        + project_name
-    #        + "/roles/"
-    #        + role,
-    #    ],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "PUT",
-            "-v",
-            "-E",
-            "./client_cert/acct-mgt-2.crt",
-            "-key",
-            "./client_cert/acct-mgt-2.key",
+    cmd = (
+        ["curl", "-X", "PUT", "-v"]
+        + auth_opts
+        + [
             acct_mgt_url
             + "/users/"
             + user_name
             + "/projects/"
             + project_name
             + "/roles/"
-            + role,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+            + role
+        ]
     )
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     print("add role --> result: " + result.stdout.decode("utf-8") + "\n\n")
     return compare_results(result, success_pattern)
 
 
 def ms_user_project_remove_role(
-    acct_mgt_url, basci_auth, cert, user_name, project_name, role, success_pattern
+    acct_mgt_url, user_name, project_name, role, success_pattern, auth_opts=[]
 ):
     up = basic_auth.split(":")
     username = up[0]
     password = up[1]  # result = subprocess.run(
-    #    [
-    #        "curl",
-    #        "-X",
-    #        "DELETE",
-    #        "-v", "-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key",
-    #        acct_mgt_url
-    #        + "/users/"
-    #        + user_name
-    #        + "/projects/"
-    #        + project_name
-    #        + "/roles/"
-    #        + role,
-    #    ],
-    #    stdout=subprocess.PIPE,
-    #    stderr=subprocess.STDOUT,
-    # )
-    result = subprocess.run(
-        [
-            "curl",
-            "-X",
-            "DELETE",
-            "-v",
-            "-E",
-            "./client_cert/acct-mgt-2.crt",
-            "-key",
-            "./client_cert/acct-mgt-2.key",
+    cmd = (
+        ["curl", "-X", "DELETE", "-v"]
+        + auth_opts
+        + [
             acct_mgt_url
             + "/users/"
             + user_name
             + "/projects/"
             + project_name
             + "/roles/"
-            + role,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+            + role
+        ]
+    )
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
     )  # print("--> result: "+result.stdout.decode('utf-8') +"\n\n")
     return compare_results(result, success_pattern)
 
@@ -577,9 +439,6 @@ def test_project(acct_mgt_url, basic_auth, cert):
 
 
 def test_user(acct_mgt_url, basic_auth, cert):
-    up = basic_auth.split(":")
-    username = up[0]
-    password = up[1]
     # if(oc_resource_exist("user", "test01",r'test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01',r'Error from server (NotFound): users.user.openshift.io "test01" not found')):
     #    print("Error: test_user failed as a user with a name of test01 exists.  Please delete first and rerun the tests\n")
     #    assertTrue(False)
