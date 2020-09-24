@@ -20,39 +20,46 @@ from openshift_user import *
 
 application = Flask(__name__)
 auth = HTTPBasicAuth()
+serviceaccount = '/run/secrets/kubernetes.io/serviceaccount'
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     application.logger.handlers = gunicorn_logger.handlers
     application.logger.setLevel(gunicorn_logger.level)
 
+
 def get_token_and_url():
     return ("dummy","dummy")
 
+
 def get_openshift():
-    version = os.environ["OPENSHIFT_VERSION"]
-    url = os.environ["OPENSHIFT_URL"]
-    if version==3:
-        shift = openshift_3_x(url,version,application.logger)
+    version = os.environ.get("OPENSHIFT_VERSION", "4")
+    url = os.environ.get("OPENSHIFT_URL", "https://kubernetes.default.svc")
+
+    with open(f"{serviceaccount}/token", "r") as file:
+        token = file.read()
+
+    cacrt = f"{serviceaccount}/ca.crt"
+
+    if version == "3":
+        shift = openshift_3_x(url, token, cacrt, application.logger)
         application.logger.info("using Openshift ver 3")
     else:
-        shift = openshift_4_x(url,version,application.logger)
+        shift = openshift_4_x(url, token, cacrt, application.logger)
         application.logger.info("using Openshift ver 4")
-    with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as file:
-        token = file.read()
-        shift.set_token(token)
-        application.logger.info("Attached token to shift")        
-        return shift
-    return None
+
+    return shift
+
 
 @auth.verify_password
-def verify_password(username, password):
-    # This file is
-    user_str = ""
-    with open("/app/auth/users", "r") as f:
-        user_cred = f.read()
-    user = user_str.split(" ", 1)
-    if username == user[0] and password == user[1]:
+def verify_password(have_username, have_password):
+    with open('/app/auth/ACCT_MGT_USER') as fd:
+        username = fd.read()
+
+    with open('/app/auth/ACCT_MGT_PASS') as fd:
+        password = fd.read()
+
+    if have_username == username and have_password == password:
         return username
 
 
@@ -96,6 +103,19 @@ def get_moc_rolebindings(project_name, user_name, role):
     )
 
 
+@application.route('/healthcheck')
+def healthcheck():
+    shift = get_openshift()
+    res = shift.get('/')
+    healthy = res.status_code == 200
+
+    return Response(
+        response=json.dumps({'healthy': healthy}),
+        status=200 if healthy else 500,
+        mimetype='application/json',
+    )
+
+
 @application.route(
     "/users/<user_name>/projects/<project_name>/roles/<role>", methods=["PUT"]
 )
@@ -124,7 +144,7 @@ def delete_moc_rolebindings(project_name, user_name, role):
 
 @application.route("/projects/<project_uuid>", methods=["GET"])
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["GET"])
-# @auth.login_required
+@auth.login_required
 def get_moc_project(project_uuid, user_name=None):
     shift = get_openshift()
     if shift.project_exists(project_uuid):
@@ -142,7 +162,7 @@ def get_moc_project(project_uuid, user_name=None):
 
 @application.route("/projects/<project_uuid>", methods=["PUT"])
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["PUT"])
-# @auth.login_required
+@auth.login_required
 def create_moc_project(project_uuid, user_name=None):
     shift = get_openshift()
     # first check the project_name is a valid openshift project name
@@ -179,7 +199,7 @@ def create_moc_project(project_uuid, user_name=None):
             )
         return Response(
             response=json.dumps(
-                {"msg": "project unabled to be created (" + project_uuid + ")"}
+                {"msg": "project unabled to be created (" + project_uuid + ")" + str(r.text)}
             ),
             status=400,
             mimetype="application/json",
@@ -193,11 +213,11 @@ def create_moc_project(project_uuid, user_name=None):
 
 @application.route("/projects/<project_uuid>", methods=["DELETE"])
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["DELETE"])
-# @auth.login_required
+@auth.login_required
 def delete_moc_project(project_uuid, user_name=None):
     shift = get_openshift()
     if shift.project_exists(project_uuid):
-        r = shift.delete_project(project_uuid, user_name)
+        r = shift.delete_project(project_uuid)
         if r.status_code == 200 or r.status_code == 201:
             return Response(
                 response=json.dumps({"msg": "project deleted (" + project_uuid + ")"}),
