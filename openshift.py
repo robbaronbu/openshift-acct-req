@@ -46,26 +46,22 @@ class openshift(requests.Session):
 
         return super().request(method, url, **kwargs)
 
-
-class openshift_3_x(openshift):
-
     def project_exists(self, project_name):
-        url = f"/oapi/v1/projects/{project_name}"
+        url = f"{self.project_api_endpoint}/{project_name}"
         r = self.get(url)
         return r.status_code == 200 or r.status_code == 201
 
     def delete_project(self, project_name):
         # check project_name
-        url = f"/oapi/v1/projects/{project_name}"
+        url = f"{self.project_api_endpoint}/{project_name}"
         r = self.delete(url)
         return r
 
     def create_project(self, project_id, project_name, user_name):
         # check project_name
-        url = "/oapi/v1/projects"
         payload = {
             "kind": "Project",
-            "apiVersion": "user.openshift.io/v1",
+            "apiVersion": self.project_api_version,
             "metadata": {
                 "name": project_id,
                 "annotations": {
@@ -74,41 +70,16 @@ class openshift_3_x(openshift):
                 },
             },
         }
-        return self.post(url, data=json.dumps(payload))
+        return self.post(self.project_api_endpoint, data=json.dumps(payload))
 
-    # member functions for users
 
-    # member functions to associate roles for users on projects
+class openshift_3_x(openshift):
+
+    project_api_endpoint = "/oapi/v1/projects"
+    project_api_version = "v1"
 
 
 class openshift_4_x(openshift):
 
-    # member functions for projects
-    def project_exists(self, project_name):
-        url = f"/apis/project.openshift.io/v1/projects/{project_name}"
-        r = self.get(url)
-        return r.status_code == 200 or r.status_code == 201
-
-    def delete_project(self, project_name):
-        # check project_name
-        url = f"/apis/project.openshift.io/v1/projects/{project_name}"
-        return self.delete(url)
-
-    def create_project(self, project_id, project_name, user_name):
-        url = "/apis/project.openshift.io/v1/projects/"
-        payload = {
-            "kind": "Project",
-            "apiVersion": "project.openshift.io/v1",
-            "metadata": {
-                "name": project_id,
-                "annotations": {
-                    "openshift.io/display-name": project_name,
-                    "openshift.io/requester": user_name,
-                },
-            },
-        }
-        return self.post(url, data=json.dumps(payload))
-
-    # member functions for users
-
-    # member functions to associate roles for users on projects
+    project_api_endpoint = "/apis/project.openshift.io/v1/projects"
+    project_api_version = "project.openshift.io/v1"
