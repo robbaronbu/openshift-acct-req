@@ -249,8 +249,8 @@ def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
     # full name in payload
     user_exists = 0x00
     # use case if User doesn't exist, then create
-    if not shift.exists_openshift_user_exists(user_name):
-        r = shift.create_openshift_user(user_name, full_name)
+    if not shift.user_exists(user_name):
+        r = shift.create_user(user_name, full_name)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
@@ -266,8 +266,8 @@ def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
         id_user = user_name
 
     # if identity doesn't exist then create
-    if not self.identity_exists(id_provider, id_user):
-        r = self.create_identity(id_provider, id_user)
+    if not shift.identity_exists(id_provider, id_user):
+        r = shift.create_identity(id_provider, id_user)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
