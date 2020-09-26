@@ -48,10 +48,17 @@ class openshift:
             self.logger.info("r: " + r.text)
         return r
 
-    def del_request(self, url, debug=False):
-        r = requests.delete(url, headers=self.headers, verify=self.verify)
+    def del_request(self, url, payload, debug=False):
+        if payload is None:
+            r = requests.delete(url, headers=self.headers, verify=self.verify)
+        else:
+            r = requests.delete(
+                url, headers=self.headers, data=json.dumps(payload), verify=self.verify
+            )
         if debug == True:
             self.logger.info("url: " + url)
+            if payload is not None:
+                self.logger.info("payload:" + json.dumps(payload))
             self.logger.info("r: " + str(r.status_code))
             self.logger.info("r: " + r.text)
         return r
@@ -102,14 +109,14 @@ class openshift_3_x(openshift):
         return r
 
     # member functions for users
-    def exists_openshift_user(token, api_url, user_name):
+    def user_exists(self, api_url, user_name):
         url = "https://" + api_url + "/oapi/v1/users/" + user_name
         r = self.get_request(url, True)
         if r.status_code == 200 or r.status_code == 201:
             return True
         return False
 
-    def create_openshift_user(token, api_url, user_name, full_name):
+    def create_user(self, api_url, user_name, full_name):
         url = "https://" + api_url + "/oapi/v1/users"
         payload = {
             "kind": "User",
@@ -117,12 +124,72 @@ class openshift_3_x(openshift):
             "metadata": {"name": user_name},
             "fullName": full_name,
         }
-        r = requests.post(url, payload, True)
+        r = self.post_request(url, payload, True)
         return r
 
-    def delete_openshift_user(token, api_url, user_name, full_name):
+    def delete_user(self, api_url, user_name, full_name):
         url = "https://" + api_url + "/oapi/v1/users/" + user_name
-        r = self.del_request(url, True)
+        r = self.del_request(url, None, True)
+        return r
+
+    # member functions for identities
+    def identity_exists(self, api_url, id_provider, id_user):
+        url = (
+            "https://" + api_url + "/oapi/v1/identities/" + id_provider + ":" + id_user
+        )
+        r = self.get_request(url, True)
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_identity(self, api_url, id_provider, id_user):
+        url = "https://" + api_url + "/oapi/v1/identities"
+        payload = {
+            "kind": "Identity",
+            "apiVersion": "v1",
+            "providerName": id_provider,
+            "providerUserName": id_user,
+        }
+        r = self.post_request(url, payload, True)
+        return r
+
+    def delete_identity(self, api_url, id_provider, id_user):
+        url = "https://" + api_url + "/oapi/v1/identities"
+        payload = {
+            "kind": "DeleteOptions",
+            "apiVersion": "v1",
+            "providerName": id_provider,
+            "providerUserName": id_user,
+            "gracePeriodSeconds": "300",
+        }
+        r = self.del_request(url, payload, True)
+        return r
+
+    def useridentitymapping_exists(token, api_url, user_name, id_provider, id_user):
+        url = (
+            "https://"
+            + api_url
+            + "/oapi/v1/useridentitymappings/"
+            + id_provider
+            + ":"
+            + id_user
+        )
+        r = self.get_request(url, True)
+        # it is probably not necessary to check the user name in the useridentity
+        # mapping
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_useridentitymapping(token, api_url, user_name, id_provider, id_user):
+        url = "https://" + api_url + "/oapi/v1/useridentitymappings"
+        payload = {
+            "kind": "UserIdentityMapping",
+            "apiVersion": "v1",
+            "user": {"name": user_name},
+            "identity": {"name": id_provider + ":" + id_user},
+        }
+        r = self.post_request(url, payload, True)
         return r
 
     # member functions to associate roles for users on projects
@@ -192,7 +259,79 @@ class openshift_4_x(openshift):
 
     def delete_user(self, api_url, user_name, full_name):
         url = "https://" + api_url + "/apis/user.openshift.io/v1/users" + user_name
-        r = self.del_request(url, True)
+        r = self.del_request(url, None, True)
+        return r
+
+    # member functions for identities
+    def identity_exists(self, api_url, id_provider, id_user):
+        url = (
+            "https://"
+            + api_url
+            + "/apis/user.openshift.io/v1/identities/"
+            + id_provider
+            + ":"
+            + id_user
+        )
+        r = self.get_request(url, True)
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_identity(self, api_url, id_provider, id_user):
+        url = "https://" + api_url + "/apis/user.openshift.io/v1/identities"
+        payload = {
+            "kind": "Identity",
+            "apiVersion": "v1",
+            "providerName": id_provider,
+            "providerUserName": id_user,
+        }
+        r = self.post_request(url, payload, True)
+        return r
+
+    def delete_identity(self, api_url, id_provider, id_user):
+        url = (
+            "https://"
+            + api_url
+            + "/apis/user.openshift.io/v1/identities/"
+            + id_provider
+            + ":"
+            + id_user
+        )
+        payload = {
+            "kind": "DeleteOptions",
+            "apiVersion": "v1",
+            "providerName": id_provider,
+            "providerUserName": id_user,
+            "gracePeriodSeconds": "300",
+        }
+        r = self.del_request(url, payload, True)
+        return r
+
+    def useridentitymapping_exists(token, api_url, user_name, id_provider, id_user):
+        url = (
+            "https://"
+            + api_url
+            + "/apis/user.openshift.io/v1/useridentitymappings/"
+            + id_provider
+            + ":"
+            + id_user
+        )
+        r = self.get_request(url, True)
+        # it is probably not necessary to check the user name in the useridentity
+        # mapping
+        if r.status_code == 200 or r.status_code == 201:
+            return True
+        return False
+
+    def create_useridentitymapping(token, api_url, user_name, id_provider, id_user):
+        url = "https://" + api_url + "/apis/user.openshift.io/v1/useridentitymappings"
+        payload = {
+            "kind": "UserIdentityMapping",
+            "apiVersion": "v1",
+            "user": {"name": user_name},
+            "identity": {"name": id_provider + ":" + id_user},
+        }
+        r = self.post_request(url, payload, True)
         return r
 
     # member functions to associate roles for users on projects

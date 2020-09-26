@@ -226,9 +226,9 @@ def delete_moc_project(project_uuid):
 @application.route("/users/<user_name>", methods=["GET"])
 # @auth.login_required
 def get_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None):
-    (token, openshift_url) = get_token_and_url()
+    shift = get_openshift()
     r = None
-    if exists_openshift_user(token, openshift_url, user_name):
+    if shift.user_exists(user_name):
         return Response(
             response=json.dumps({"msg": "user (" + user_name + ") exists"}),
             status=200,
@@ -244,13 +244,13 @@ def get_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None
 @application.route("/users/<user_name>", methods=["PUT"])
 # @auth.login_required
 def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None):
-    (token, openshift_url) = get_token_and_url()
+    shift = get_openshift()
     r = None
     # full name in payload
     user_exists = 0x00
     # use case if User doesn't exist, then create
-    if not exists_openshift_user(token, openshift_url, user_name):
-        r = create_openshift_user(token, openshift_url, user_name, full_name)
+    if not shift.exists_openshift_user_exists(user_name):
+        r = shift.create_openshift_user(user_name, full_name)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
@@ -266,8 +266,8 @@ def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
         id_user = user_name
 
     # if identity doesn't exist then create
-    if not exists_openshift_identity(token, openshift_url, id_provider, id_user):
-        r = create_openshift_identity(token, openshift_url, id_provider, id_user)
+    if not self.identity_exists(id_provider, id_user):
+        r = self.create_identity(id_provider, id_user)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
@@ -279,12 +279,8 @@ def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
     else:
         user_exists = user_exists | 0x02
     # creates the useridenitymapping
-    if not exists_openshift_useridentitymapping(
-        token, openshift_url, user_name, id_provider, id_user
-    ):
-        r = create_openshift_useridentitymapping(
-            token, openshift_url, user_name, id_provider, id_user
-        )
+    if not shift.useridentitymapping_exists(user_name, id_provider, id_user):
+        r = shift.create_useridentitymapping(user_name, id_provider, id_user)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
@@ -315,13 +311,13 @@ def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
 
 @application.route("/users/<user_name>", methods=["DELETE"])
 # @auth.login_required
-def delete_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None):
-    (token, openshift_url) = get_token_and_url()
+def delete_moc_user(user_name):
+    shift = get_openshift()
     r = None
     user_does_not_exist = 0
     # use case if User exists then delete
-    if exists_openshift_user(token, openshift_url, user_name):
-        r = delete_openshift_user(token, openshift_url, user_name, full_name)
+    if shift.user_exists(user_name):
+        r = shift.delete_user(user_name)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
@@ -333,11 +329,15 @@ def delete_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=N
     else:
         user_does_not_exist = 0x01
 
-    if id_user is None:
-        id_user = user_name
-    # if identity doesn't exist then create
-    if exists_openshift_identity(token, openshift_url, id_provider, id_user):
-        r = delete_openshift_identity(token, openshift_url, id_provider, id_user)
+    # This is the specific business case for the MOC sort of
+    # TODO: generalize this in the next version.
+    #    1) get the list of identities associated with the user
+    #    2) delete each one (as well as doing this part first)
+    id_user = user_name
+    id_provider = "sso_auth"
+
+    if shift.identity_exists(id_provider, id_user):
+        r = shift.delete_identity(id_provider, id_user)
         if r.status_code != 200 and r.status_code != 201:
             return Response(
                 response=json.dumps(
