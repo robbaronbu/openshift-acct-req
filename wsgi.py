@@ -196,12 +196,11 @@ def create_moc_project(project_uuid, user_name=None):
 
 
 @application.route("/projects/<project_uuid>", methods=["DELETE"])
-@application.route("/projects/<project_uuid>/owner/<user_name>", methods=["DELETE"])
 # @auth.login_required
-def delete_moc_project(project_uuid, user_name=None):
+def delete_moc_project(project_uuid):
     shift = get_openshift()
     if shift.project_exists(project_uuid):
-        r = shift.delete_project(project_uuid, user_name)
+        r = shift.delete_project(project_uuid)
         if r.status_code == 200 or r.status_code == 201:
             return Response(
                 response=json.dumps({"msg": "project deleted (" + project_uuid + ")"}),

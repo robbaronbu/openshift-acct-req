@@ -34,7 +34,7 @@ class openshift:
     def get_url(self):
         return self.url
 
-    def cnvt_project_name(project_name):
+    def cnvt_project_name(self, project_name):
         suggested_project_name = re.sub("^[^A-Za-z0-9]+", "", project_name)
         suggested_project_name = re.sub("[^A-Za-z0-9]+$", "", suggested_project_name)
         suggested_project_name = re.sub("[^A-Za-z0-9\-]+", "-", suggested_project_name)
@@ -78,21 +78,21 @@ class openshift_3_x(openshift):
             return True
         return False
 
-    def create_project(self, project_name, user_name):
+    def create_project(self, project_name, display_name, user_name):
         # check project_name
         url = "https://" + self.get_url() + "/oapi/v1/projects"
         payload = {
             "kind": "Project",
             "apiVersion": "v1",
             "metadata": {
-                "name": project_uuid,
+                "name": project_name,
                 "annotations": {
-                    "openshift.io/display-name": project_name,
+                    "openshift.io/display-name": display_name,
                     "openshift.io/requester": user_name,
                 },
             },
         }
-        r = self.post_request(url, json.dumps(payload))
+        r = self.post_request(url, payload, True)
         return r
 
     def delete_project(self, project_name):
@@ -117,7 +117,7 @@ class openshift_3_x(openshift):
             "metadata": {"name": user_name},
             "fullName": full_name,
         }
-        r = requests.post(url, headers=headers, data=json.dumps(payload), verify=False)
+        r = requests.post(url, payload, True)
         return r
 
     def delete_openshift_user(token, api_url, user_name, full_name):
@@ -143,21 +143,21 @@ class openshift_4_x(openshift):
             return True
         return False
 
-    def create_project(self, short_name, project_name, user_name):
+    def create_project(self, project_name, display_name, user_name):
         # check project_name
         url = "https://" + self.get_url() + "/apis/project.openshift.io/v1/projects/"
         payload = {
             "kind": "Project",
-            "apiVersion": "v1",
+            "apiVersion": "project.openshift.io/v1",
             "metadata": {
-                "name": short_name,
+                "name": project_name,
                 "annotations": {
-                    "openshift.io/display-name": project_name,
+                    "openshift.io/display-name": display_name,
                     "openshift.io/requester": user_name,
                 },
             },
         }
-        r = self.post_request(url, json.dumps(payload))
+        r = self.post_request(url, payload, True)
         return r
 
     def delete_project(self, project_name):
@@ -172,25 +172,25 @@ class openshift_4_x(openshift):
         return r
 
     # member functions for users
-    def user_exists(token, api_url, user_name):
+    def user_exists(self, api_url, user_name):
         url = "https://" + api_url + "/apis/user.openshift.io/v1/users" + user_name
         r = self.get_request(url, True)
         if r.status_code == 200 or r.status_code == 201:
             return True
         return False
 
-    def create_user(token, api_url, user_name, full_name):
+    def create_user(self, api_url, user_name, full_name):
         url = "https://" + api_url + "/apis/user.openshift.io/v1/users"
         payload = {
             "kind": "User",
-            "apiVersion": "v1",
+            "apiVersion": "user.openshift.io/v1",
             "metadata": {"name": user_name},
             "fullName": full_name,
         }
-        r = self.post_request(url, json.dumps(payload))
+        r = self.post_request(url, payload, True)
         return r
 
-    def delete_user(token, api_url, user_name, full_name):
+    def delete_user(self, api_url, user_name, full_name):
         url = "https://" + api_url + "/apis/user.openshift.io/v1/users" + user_name
         r = self.del_request(url, True)
         return r
