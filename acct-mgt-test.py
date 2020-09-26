@@ -389,7 +389,6 @@ def test_project(acct_mgt_url, auth_opts):
     ms_delete_project(acct_mgt_url, "4234-1234-1234-1234", auth_opts)
 
 
-@pytest.mark.skip(reason="test user")
 def test_user(acct_mgt_url, auth_opts):
     # if(oc_resource_exist("user", "test01",r'test01[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test01',r'Error from server (NotFound): users.user.openshift.io "test01" not found')):
     #    print("Error: test_user failed as a user with a name of test01 exists.  Please delete first and rerun the tests\n")
