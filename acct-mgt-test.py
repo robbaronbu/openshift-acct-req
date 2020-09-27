@@ -195,7 +195,7 @@ def ms_delete_project(acct_mgt_url, project_name, auth_opts=[]):
 
 def ms_check_user(acct_mgt_url, user_name, auth_opts=[]):
     cmd = (
-        ["curl", "-X", "GET", "-kv", ]
+        ["curl", "-X", "GET", "-kv",]
         + auth_opts
         + [acct_mgt_url + "/users/" + user_name]
     )
@@ -402,17 +402,14 @@ def test_user(acct_mgt_url, auth_opts):
 
     # test user creation
     # test01                    bfd6dab5-11f3-11ea-89a6-fa163e2bb38b                         sso_auth:test01
-    if not oc_resource_exist("users", "User", "test01" ):
+    if not oc_resource_exist("users", "User", "test01"):
         check.is_true(
             ms_create_user(acct_mgt_url, "test01", auth_opts),
             "unable to create test01",
         )
 
     check.is_true(
-        oc_resource_exist(
-            "users", "User", "test01" 
-        ),
-        "user test01 doesn't exist",
+        oc_resource_exist("users", "User", "test01"), "user test01 doesn't exist",
     )
     check.is_true(
         ms_check_user(acct_mgt_url, "test01", auth_opts),
@@ -420,44 +417,42 @@ def test_user(acct_mgt_url, auth_opts):
     )
 
     # test creation of a second user with the same name
-    if oc_resource_exist("users", "User", "test01" ):
+    if oc_resource_exist("users", "User", "test01"):
         check.is_false(
             ms_create_user(acct_mgt_url, "test01", auth_opts),
             "Should have failed to create a second user with the username of test01",
         )
     check.is_true(
-        oc_resource_exist("users", "User", "test01" ),
-        "user test01 doesn't exist",
+        oc_resource_exist("users", "User", "test01"), "user test01 doesn't exist",
     )
 
     # test user deletion
-    if oc_resource_exist("users", "User", "test01" ):
+    if oc_resource_exist("users", "User", "test01"):
         check.is_true(
             ms_delete_user(acct_mgt_url, "test01", auth_opts), "user test01 deleted",
         )
     check.is_false(
-        oc_resource_exist("users", "User", "test01" ),
-        "user test01 not found",
+        oc_resource_exist("users", "User", "test01"), "user test01 not found",
     )
 
     # test deleting a user that was deleted
-    if not oc_resource_exist("users", "User", "test01" ):
+    if not oc_resource_exist("users", "User", "test01"):
         check.is_false(
             ms_delete_user(acct_mgt_url, "test01", auth_opts),
             "shouldn't be able to delete non-existing user test01",
         )
     check.is_false(
-        oc_resource_exist("users", "User", "test01" ),
-        "user test01 not found",
+        oc_resource_exist("users", "User", "test01"), "user test01 not found",
     )
     check.is_false(
         ms_check_user(acct_mgt_url, "test01", auth_opts),
         "User test01 exists but it shouldn't exist at this point",
     )
 
+
 def test_project_user_role(acct_mgt_url, auth_opts):
     # Create a project
-    if not oc_resource_exist("project", "Project", "test-002" ):
+    if not oc_resource_exist("project", "Project", "test-002"):
         check.is_true(
             ms_create_project(
                 acct_mgt_url, "test-002", '{"displayName":"test-002"}', auth_opts
@@ -465,19 +460,19 @@ def test_project_user_role(acct_mgt_url, auth_opts):
             "Project (test-002) was unable to be created",
         )
     check.is_true(
-        oc_resource_exist("project", "Project", "test-002" ),
+        oc_resource_exist("project", "Project", "test-002"),
         "Project (test-002) does not exist",
     )
 
     # Create some users test02 - test-05
     for x in range(2, 6):
-        if not oc_resource_exist("users", "User", "test0" + str(x) ):
+        if not oc_resource_exist("users", "User", "test0" + str(x)):
             check.is_true(
                 ms_create_user(acct_mgt_url, "test0" + str(x), auth_opts),
                 "Unable to create user " + "test0" + str(x),
             )
         check.is_true(
-            oc_resource_exist("users", "User", "test0" + str(x) ),
+            oc_resource_exist("users", "User", "test0" + str(x)),
             "user test0" + str(x) + " not found",
         )
 
@@ -541,7 +536,7 @@ def test_project_user_role(acct_mgt_url, auth_opts):
         "Removed rolebinding successful",
     )
     # TODO: write an oc command to check if a role was added to a user for a project.
-    #       Not trivial based on the current way this is reported by oc 
+    #       Not trivial based on the current way this is reported by oc
     check.is_true(
         ms_user_project_remove_role(
             acct_mgt_url,
@@ -560,10 +555,9 @@ def test_project_user_role(acct_mgt_url, auth_opts):
         "project (test-002) deleted",
     )
     for x in range(2, 6):
-        if oc_resource_exist("users", "User", "test0" + str(x) ):
+        if oc_resource_exist("users", "User", "test0" + str(x)):
             check.is_true(
-                ms_delete_user(acct_mgt_url, "test0" + str(x), auth_opts)
-                == True,
+                ms_delete_user(acct_mgt_url, "test0" + str(x), auth_opts) == True,
                 "user " + "test0" + str(x) + "unable to be deleted",
             )
 

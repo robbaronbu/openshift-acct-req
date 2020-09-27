@@ -114,7 +114,7 @@ def create_moc_rolebindings(project_name, user_name, role):
 def delete_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
     shift = get_openshift()
-    r = shift.update_user_role_project(project_name, user_name, role, "del" )
+    r = shift.update_user_role_project(project_name, user_name, role, "del")
     return r
 
 
