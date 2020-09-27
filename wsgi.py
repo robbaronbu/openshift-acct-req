@@ -47,10 +47,9 @@ def get_openshift():
 
 @auth.verify_password
 def verify_password(username, password):
-    # This file is
     user_str = ""
     with open("/app/auth/users", "r") as f:
-        user_cred = f.read()
+        user_str = f.read()
     user = user_str.split(" ", 1)
     if username == user[0] and password == user[1]:
         return username
@@ -59,7 +58,7 @@ def verify_password(username, password):
 @application.route(
     "/users/<user_name>/projects/<project_name>/roles/<role>", methods=["GET"]
 )
-# @auth.login_required
+@auth.login_required
 def get_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
     shift = get_openshift()
@@ -99,7 +98,7 @@ def get_moc_rolebindings(project_name, user_name, role):
 @application.route(
     "/users/<user_name>/projects/<project_name>/roles/<role>", methods=["PUT"]
 )
-# @auth.login_required
+@auth.login_required
 def create_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
     shift = get_openshift()
@@ -110,7 +109,7 @@ def create_moc_rolebindings(project_name, user_name, role):
 @application.route(
     "/users/<user_name>/projects/<project_name>/roles/<role>", methods=["DELETE"]
 )
-# @auth.login_required
+@auth.login_required
 def delete_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
     shift = get_openshift()
@@ -120,7 +119,7 @@ def delete_moc_rolebindings(project_name, user_name, role):
 
 @application.route("/projects/<project_uuid>", methods=["GET"])
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["GET"])
-# @auth.login_required
+@auth.login_required
 def get_moc_project(project_uuid, user_name=None):
     shift = get_openshift()
     if shift.project_exists(project_uuid):
@@ -138,7 +137,7 @@ def get_moc_project(project_uuid, user_name=None):
 
 @application.route("/projects/<project_uuid>", methods=["PUT"])
 @application.route("/projects/<project_uuid>/owner/<user_name>", methods=["PUT"])
-# @auth.login_required
+@auth.login_required
 def create_moc_project(project_uuid, user_name=None):
     shift = get_openshift()
     # first check the project_name is a valid openshift project name
@@ -188,7 +187,7 @@ def create_moc_project(project_uuid, user_name=None):
 
 
 @application.route("/projects/<project_uuid>", methods=["DELETE"])
-# @auth.login_required
+@auth.login_required
 def delete_moc_project(project_uuid):
     shift = get_openshift()
     if shift.project_exists(project_uuid):
@@ -216,7 +215,7 @@ def delete_moc_project(project_uuid):
 
 
 @application.route("/users/<user_name>", methods=["GET"])
-# @auth.login_required
+@auth.login_required
 def get_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=None):
     shift = get_openshift()
     r = None
@@ -234,7 +233,7 @@ def get_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=None)
 
 
 @application.route("/users/<user_name>", methods=["PUT"])
-# @auth.login_required
+@auth.login_required
 def create_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=None):
     shift = get_openshift()
     r = None
@@ -302,7 +301,7 @@ def create_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=No
 
 
 @application.route("/users/<user_name>", methods=["DELETE"])
-# @auth.login_required
+@auth.login_required
 def delete_moc_user(user_name):
     shift = get_openshift()
     r = None
