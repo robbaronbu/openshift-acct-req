@@ -132,6 +132,7 @@ def oc_resource_exist(resource, kind, name, project=None):
     if result.returncode == 0:
         if result.stdout is not None:
             result_json = json.loads(result.stdout.decode("utf-8"))
+            pprint.pprint(result_json)
             if result_json["kind"] == kind and result_json["metadata"]["name"] == name:
                 return True
     return False
@@ -223,7 +224,7 @@ def ms_delete_user(acct_mgt_url, user_name, auth_opts=[]):
 
 
 def ms_user_project_get_role(
-    acct_mgt_url, project_name, role, success_pattern, auth_opts=[],
+    acct_mgt_url, user_name, project_name, role, success_pattern, auth_opts=[],
 ):
     cmd = (
         ["curl", "-X", "GET", "-v",]
@@ -454,16 +455,9 @@ def test_user(acct_mgt_url, auth_opts):
         "User test01 exists but it shouldn't exist at this point",
     )
 
-
-@pytest.mark.skip(reason="project user role association")
 def test_project_user_role(acct_mgt_url, auth_opts):
     # Create a project
-    if not oc_resource_exist(
-        "project",
-        "test-002",
-        r"test-002[ \t]*test-002[ \t]",
-        r'Error from server \(NotFound\): namespaces "test-002" not found',
-    ):
+    if not oc_resource_exist("project", "Project", "test-002" ):
         check.is_true(
             ms_create_project(
                 acct_mgt_url, "test-002", '{"displayName":"test-002"}', auth_opts
@@ -471,38 +465,19 @@ def test_project_user_role(acct_mgt_url, auth_opts):
             "Project (test-002) was unable to be created",
         )
     check.is_true(
-        oc_resource_exist(
-            "project",
-            "test-002",
-            r"test-002[ \t]*test-002[ \t]",
-            r'Error from server \(NotFound\): namespaces "test-002" not found',
-        ),
+        oc_resource_exist("project", "Project", "test-002" ),
         "Project (test-002) does not exist",
     )
 
     # Create some users test02 - test-05
     for x in range(2, 6):
-        if not oc_resource_exist(
-            "user",
-            "test0" + str(x),
-            "test0" + str(x) + r"[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test0" + str(x),
-            r'Error from server (NotFound): users.user.openshift.io "test0'
-            + str(x)
-            + '" not found',
-        ):
+        if not oc_resource_exist("users", "User", "test0" + str(x) ):
             check.is_true(
                 ms_create_user(acct_mgt_url, "test0" + str(x), auth_opts),
                 "Unable to create user " + "test0" + str(x),
             )
         check.is_true(
-            oc_resource_exist(
-                "user",
-                "test0" + str(x),
-                "test0" + str(x) + r"[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test0" + str(x),
-                r'Error from server (NotFound): users.user.openshift.io "test0'
-                + str(x)
-                + r'" not found',
-            ),
+            oc_resource_exist("users", "User", "test0" + str(x) ),
             "user test0" + str(x) + " not found",
         )
 
@@ -528,12 +503,9 @@ def test_project_user_role(acct_mgt_url, auth_opts):
         ),
         "Role unable to be added",
     )
-    check.is_true(
-        oc_resource_exist(
-            "rolebindings", "admin", "^admin[ \t]*/admin[ \t]*test02", "", "test-002"
-        ),
-        "role does not exist",
-    )
+    # TODO: should write a oc command to check this, but for rolebindings
+    #       this cannot be done in the same way as for users and projects
+    #       for now, rely on the microserver.
     check.is_true(
         ms_user_project_get_role(
             acct_mgt_url,
@@ -568,13 +540,8 @@ def test_project_user_role(acct_mgt_url, auth_opts):
         ),
         "Removed rolebinding successful",
     )
-    check.is_false(
-        oc_resource_exist(
-            "rolebindings", "admin", r"^admin[ \t]*/admin[ \t]*test02", r"", "test-002"
-        ),
-        "Rolebinding does not exit",
-    )
-
+    # TODO: write an oc command to check if a role was added to a user for a project.
+    #       Not trivial based on the current way this is reported by oc 
     check.is_true(
         ms_user_project_remove_role(
             acct_mgt_url,
@@ -593,16 +560,9 @@ def test_project_user_role(acct_mgt_url, auth_opts):
         "project (test-002) deleted",
     )
     for x in range(2, 6):
-        if oc_resource_exist(
-            "user",
-            "test0" + str(x),
-            "test0" + str(x) + r"[ \t]*[a-f0-9\-]*[ \t]*sso_auth:test0" + str(x),
-            r'Error from server (NotFound): users.user.openshift.io "test0'
-            + str(x)
-            + '" not found',
-        ):
+        if oc_resource_exist("users", "User", "test0" + str(x) ):
             check.is_true(
-                ms_delete_user(acct_mgt_url, username, password, "test0" + str(x))
+                ms_delete_user(acct_mgt_url, "test0" + str(x), auth_opts)
                 == True,
                 "user " + "test0" + str(x) + "unable to be deleted",
             )
