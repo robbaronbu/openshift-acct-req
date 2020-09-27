@@ -96,7 +96,6 @@ def oc_service_account_exists(project, service_account):
     )
     if result.returncode == 0:
         result_json = json.loads(result.stdout.decode("utf-8"))
-        pprint.pprint(result_json)
         if (
             result_json["kind"] == "ServiceAccount"
             and result_json["metadata"]["name"] == service_account
@@ -125,7 +124,6 @@ def oc_sa_role_exists(project, service_account, cluster_role):
                         and sub["name"] == service_account
                     ):
                         return True
-    # pprint.pprint(result)
     return False
 
 
@@ -136,12 +134,8 @@ def oc_create_service_account(project, service_account, cluster_role):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        # if result.returncode == 0:
-        #    result_json = json.loads(result.stdout.decode("utf-8"))
-        #    pprint.pprint(result_json)
-        # else:
-        #    pprint.pprint(result)
-    # short circuit this for testing
+    # short circuit this as a work-a-round
+    # TODO: fix oc_sa_role_exists
     if True or not oc_sa_role_exists(project, service_account, cluster_role):
         result = subprocess.run(
             [
@@ -157,11 +151,6 @@ def oc_create_service_account(project, service_account, cluster_role):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        # if result.returncode == 0:
-        #    result_json = json.loads(result.stdout.decode("utf-8"))
-        #    pprint.pprint(result_json)
-        # else:
-        #    pprint.pprint(result)
 
 
 def oc_project_exists(project):
@@ -354,7 +343,14 @@ def get_svc_def(project, service, port=8080):
             "apiVersion": "v1",
             "metadata": {"name": service, "namespace": project},
             "spec": {
-                "ports": [{"protocol": "TCP", "port": 80, "targetPort": port}],
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": port,
+                    }
+                ],
                 "type": "ClusterIP",
                 "selector": {"app": project, "deploymentconfig": project},
             },
@@ -394,29 +390,13 @@ def oc_route_exists(project, route, host_subdomain):
 
 def get_route_def(project, route, app_url, service):
     route = {
-        "apiVersion": "v1",
+        "apiVersion": "route.openshift.io/v1",
         "kind": "Route",
         "metadata": {"name": route, "namespace": project, "labels": {"app": project},},
         "spec": {
             "host": route + "." + app_url,
-            # 3.x target port = 7443-tcp
-            # 4.x target port = 7443
-            "port": {"targetPort": "7443"},
+            "port": {"targetPort": "8080-tcp"},  # defined in the service !!!
             "tls": {"termination": "edge"},
-            "to": {"kind": "Service", "name": service, "weight": 100},
-        },
-    }
-    return json.dumps(route)
-
-
-def get_route2_def(project, route, app_url, service):
-    route = {
-        "apiVersion": "v1",
-        "kind": "Route",
-        "metadata": {"name": route, "namespace": project, "labels": {"app": project},},
-        "spec": {
-            "host": route + "." + app_url,
-            "port": {"targetPort": 8080},
             "to": {"kind": "Service", "name": service, "weight": 100},
         },
     }
@@ -431,18 +411,6 @@ def oc_create_route(project, route, app_url, service):
         stdin=subprocess.PIPE,
     )
     r = get_route_def(project, route, app_url, service)
-    print("\n\n")
-    print(r.encode())
-    print("\n\n")
-    proc.communicate(r.encode())
-
-    proc = subprocess.Popen(
-        ["oc", "create", "-f", "-"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        stdin=subprocess.PIPE,
-    )
-    r = get_route2_def(project, "am2", app_url, service)
     print("\n\n")
     print(r.encode())
     print("\n\n")
