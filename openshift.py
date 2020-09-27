@@ -86,22 +86,27 @@ class openshift:
         if debug == True:
             self.logger.info("url: " + url)
             self.logger.info("payload: " + json.dumps(payload))
-            self.logger.info("pl: " + str(r.status_code))
-            self.logger.info("pl: " + r.text)
+            self.logger.info("po: " + str(r.status_code))
+            self.logger.info("po: " + r.text)
         return r
 
     def user_rolebinding_exists(self, user, project_name, role):
+        openshift_role=""
+
         if role == "admin":
             openshift_role = "admin"
         elif role == "member":
             openshift_role = "edit"
         elif role == "reader":
             openshift_role = "view"
+        else:
+            return False
 
         r = self.get_rolebindings(project_name, openshift_role)
         if r.status_code == 200 or r.status_code == 201:
             role_binding = r.json()
-            if user in role_binding["userNames"]:
+            pprint.pprint(role_binding)
+            if "userNames" in role_binding.keys() and role_binding["userNames"] is not None and user in role_binding["userNames"]:
                 return True
         return False
 
@@ -139,7 +144,7 @@ class openshift:
                 status=400,
                 mimetype="application/json",
             )
-        # add_openshift_role(token,api_url,project_name, role)
+        # add_openshift_role(token,self.get_url(),project_name, role)
 
         openshift_role = None
         if role == "admin":
@@ -165,10 +170,7 @@ class openshift:
         # print("A: result: "+r.text)
         if not (r.status_code == 200 or r.status_code == 201):
             # try to create the roles for binding
-            # can be more specific {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"rolebindings \"admin\" not found","reason":"NotFound","details":{"name":"admin","kind":"rolebindings"},"code":404}
-            r = self.create_rolebindings(
-                token, api_url, project_name, user, openshift_role
-            )
+            r = self.create_rolebindings(project_name, user, openshift_role)
             if r.status_code == 200 or r.status_code == 201:
                 return Response(
                     response=json.dumps(
@@ -203,7 +205,6 @@ class openshift:
             )
 
         # print("B: result: "+r.text)
-        # r=create_openshift_rolebinding(token, api_url, project_name, role)
         if r.status_code == 200 or r.status_code == 201:
             role_binding = r.json()
             if op == "add":
@@ -271,7 +272,7 @@ class openshift:
                 )
 
             # now add or remove the user
-            r = self.update_openshift_rolebindings(project_name, openshift_role, role_binding)
+            r = self.update_rolebindings(project_name, openshift_role, role_binding)
 
             msg = "unknown message"
             if r.status_code == 200 or r.status_code == 201:
@@ -348,8 +349,8 @@ class openshift_3_x(openshift):
             return True
         return False
 
-    def create_user(self, api_url, user_name, full_name):
-        url = "https://" + api_url + "/oapi/v1/users"
+    def create_user(self, user_name, full_name):
+        url = "https://" + self.get_url() + "/oapi/v1/users"
         payload = {
             "kind": "User",
             "apiVersion": "v1",
@@ -433,7 +434,7 @@ class openshift_3_x(openshift):
     def get_rolebindings(self, project_name, role):
         url = (
             "https://"
-            + api_url
+            + self.get_url()
             + "/oapi/v1/namespaces/"
             + project_name
             + "/rolebindings/"
@@ -445,7 +446,7 @@ class openshift_3_x(openshift):
 
 
     def list_rolebindings(self, project_name):
-        url = "https://" + api_url + "/oapi/v1/namespaces/" + project_name + "/rolebindings"
+        url = "https://" + self.get_url() + "/oapi/v1/namespaces/" + project_name + "/rolebindings"
         r = self.get_request(url, True)
         return r
 
@@ -458,7 +459,7 @@ class openshift_3_x(openshift):
 
     def create_rolebindings(self, project_name, user_name, role):
         url = (
-            "https://" + api_url + "/oapi/v1/namespaces/" + project_name + "/rolebindings"
+            "https://" + self.get_url() + "/oapi/v1/namespaces/" + project_name + "/rolebindings"
         )  # /' + role
         payload = {
             "kind": "RoleBinding",
@@ -475,7 +476,7 @@ class openshift_3_x(openshift):
     def update_rolebindings( self, project_name, role, rolebindings_json ):
         url = (
             "https://"
-            + api_url
+            + self.get_url()
             + "/oapi/v1/namespaces/"
             + project_name
             + "/rolebindings/"
@@ -638,7 +639,7 @@ class openshift_4_x(openshift):
     def get_rolebindings(self, project_name, role):
         url = (
             "https://"
-            + api_url
+            + self.get_url()
             + "/apis/authorization.openshift.io/v1/namespaces/"
             + project_name
             + "/rolebindings/"
@@ -649,22 +650,22 @@ class openshift_4_x(openshift):
         return r
 
     def list_rolebindings(self, project_name):
-        url = "https://" + api_url + "/apis/authorization.openshift.io/v1/namespaces/" + project_name + "/rolebindings"
+        url = "https://" + self.get_url() + "/apis/authorization.openshift.io/v1/namespaces/" + project_name + "/rolebindings"
         r = self.get_request(url, True)
         return r
 
     def delete_rolebindings(self, project_name, user_name, role):
-        payload = {"kind": "DeleteOptions", "apiVersion": "v1", "gracePeriodSeconds": "300"}
+        payload = {"kind": "DeleteOptions", "apiVersion": "authorization.openshift.io/v1", "gracePeriodSeconds": "300"}
         r = self.del_request(url, payload, True)
         return r
 
     def create_rolebindings(self, project_name, user_name, role):
         url = (
-            "https://" + api_url + "/apis/authorization.openshift.io/v1/namespaces/" + project_name + "/rolebindings"
+            "https://" + self.get_url() + "/apis/authorization.openshift.io/v1/namespaces/" + project_name + "/rolebindings"
         )  # /' + role
         payload = {
             "kind": "RoleBinding",
-            "apiVersion": "v1",
+            "apiVersion": "authorization.openshift.io/v1",
             "metadata": {"name": role, "namespace": project_name},
             "groupNames": None,
             "userNames": [user_name],
@@ -676,7 +677,7 @@ class openshift_4_x(openshift):
     def update_rolebindings( self, project_name, role, rolebindings_json ):
         url = (
             "https://"
-            + api_url
+            + self.get_url()
             + "/apis/authorization.openshift.io/v1/namespaces/"
             + project_name
             + "/rolebindings/"

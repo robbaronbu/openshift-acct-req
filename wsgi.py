@@ -28,10 +28,6 @@ if __name__ != "__main__":
     application.logger.setLevel(gunicorn_logger.level)
 
 
-def get_token_and_url():
-    return ("dummy", "dummy")
-
-
 def get_openshift():
     version = os.environ["OPENSHIFT_VERSION"]
     url = os.environ["OPENSHIFT_URL"]
@@ -66,8 +62,8 @@ def verify_password(username, password):
 # @auth.login_required
 def get_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
-    (token, openshift_url) = get_token_and_url()
-    if exists_user_rolebinding(token, openshift_url, user_name, project_name, role):
+    shift = get_openshift()
+    if shift.user_rolebinding_exists(user_name, project_name, role):
         return Response(
             response=json.dumps(
                 {
@@ -106,10 +102,8 @@ def get_moc_rolebindings(project_name, user_name, role):
 # @auth.login_required
 def create_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
-    (token, openshift_url) = get_token_and_url()
-    r = update_user_role_project(
-        token, openshift_url, project_name, user_name, role, "add"
-    )
+    shift = get_openshift()
+    r = shift.update_user_role_project(project_name, user_name, role, "add")
     return r
 
 
@@ -119,10 +113,8 @@ def create_moc_rolebindings(project_name, user_name, role):
 # @auth.login_required
 def delete_moc_rolebindings(project_name, user_name, role):
     # role can be one of Admin, Member, Reader
-    (token, openshift_url) = get_token_and_url()
-    r = update_user_role_project(
-        token, openshift_url, project_name, user_name, role, "del"
-    )
+    shift = get_openshift()
+    r = shift.update_user_role_project(project_name, user_name, role, "del" )
     return r
 
 
@@ -225,7 +217,7 @@ def delete_moc_project(project_uuid):
 
 @application.route("/users/<user_name>", methods=["GET"])
 # @auth.login_required
-def get_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None):
+def get_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=None):
     shift = get_openshift()
     r = None
     if shift.user_exists(user_name):
@@ -243,7 +235,7 @@ def get_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None
 
 @application.route("/users/<user_name>", methods=["PUT"])
 # @auth.login_required
-def create_moc_user(user_name, full_name=None, id_provider="sso_auth", id_user=None):
+def create_moc_user(user_name, full_name=None, id_provider="moc-sso", id_user=None):
     shift = get_openshift()
     r = None
     # full name in payload
