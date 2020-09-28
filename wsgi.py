@@ -13,11 +13,6 @@ from flask_httpauth import HTTPBasicAuth
 import sys
 
 from openshift import *
-from openshift_rolebindings import *
-
-# from openshift_project import *
-from openshift_identity import *
-from openshift_user import *
 
 application = Flask(__name__)
 auth = HTTPBasicAuth()
