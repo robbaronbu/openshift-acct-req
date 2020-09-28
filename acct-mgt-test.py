@@ -132,7 +132,6 @@ def oc_resource_exist(resource, kind, name, project=None):
     if result.returncode == 0:
         if result.stdout is not None:
             result_json = json.loads(result.stdout.decode("utf-8"))
-            pprint.pprint(result_json)
             if result_json["kind"] == kind and result_json["metadata"]["name"] == name:
                 return True
     return False
@@ -145,8 +144,6 @@ def ms_check_project(acct_mgt_url, project_name, auth_opts=[]):
         + [acct_mgt_url + "/projects/" + project_name]
     )
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
-    # {"msg": "project exists (test-001)"}
-    # print("\n\n***** result: "+result.stdout.decode('utf-8') +"\n\n")
     return compare_results(
         result, r'{"msg": "project exists \(' + project_name + r'\)"}'
     )
@@ -162,20 +159,20 @@ def ms_check_project(acct_mgt_url, project_name, auth_opts=[]):
 #
 #
 def ms_create_project(acct_mgt_url, project_uuid, displayNameStr, auth_opts=[]):
+    cmd=""
     if displayNameStr is None:
         cmd = (
             ["curl", "-X", "PUT", "-kv",]
             + auth_opts
             + [acct_mgt_url + "/projects/" + project_uuid]
         )
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     else:
         cmd = (
             ["curl", "-X", "PUT", "-kv", "-d", displayNameStr,]
             + auth_opts
             + [acct_mgt_url + "/projects/" + project_uuid]
         )
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,)
     return compare_results(
         result, r'{"msg": "project created \(' + project_uuid + r'\)"}'
     )
@@ -206,7 +203,7 @@ def ms_check_user(acct_mgt_url, user_name, auth_opts=[]):
 def ms_create_user(acct_mgt_url, user_name, auth_opts=[]):
 
     result = subprocess.run(
-        ["curl", "-X", "PUT", "-kv", acct_mgt_url + "/users/" + user_name],
+        ["curl", "-X", "PUT", "-kv"] + auth_opts + [ acct_mgt_url + "/users/" + user_name],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
@@ -283,7 +280,7 @@ def ms_user_project_remove_role(
     )
     result = subprocess.run(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-    )  # print("--> result: "+result.stdout.decode('utf-8') +"\n\n")
+    )  
     return compare_results(result, success_pattern)
 
 
