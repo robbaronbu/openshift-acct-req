@@ -41,4 +41,7 @@ def pytest_generate_tests(metafunc):
     #   --> get translated to the following:
     #   auth_ops = ["-E","./client_cert/acct-mgt-2.crt", "-key", "./client_cert/acct-mgt-2.key"]
     #   auth_ops = ["-cert", r"acct-mgt-2",]    metafunc.parametrize("auth_opts", [[]])
-    metafunc.parametrize("auth_opts", [[]])
+    if basic_auth is not None:
+        metafunc.parametrize("auth_opts", [["-u", basic_auth]])
+    else:
+        metafunc.parametrize("auth_opts", [[]])
