@@ -25,8 +25,8 @@ def usage_msg():
         Examples:
 
         build.py "acct-mgt-2" "acct-mgt" s-apps.osh.massopen.cloud "s-openshift.osh.massopen.cloud:8443" "3.11" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest"
-        build.py "acct-mgt" "acct-mgt" k-apps.osh.massopen.cloud "k-openshift.osh.massopen.cloud:8443" "3.11" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
-        build.py "acct-mgt" "acct-mgt" "apps.cnv.massopen.cloud" "api.cnv.massopen.cloud:6443" "4.5" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" "user" "passwd"
+        build.py "acct-mgt" "acct-mgt" k-apps.osh.massopen.cloud "k-openshift.osh.massopen.cloud:8443" "3.11" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" <username> <password>
+        build.py "acct-mgt" "acct-mgt" "apps.cnv.massopen.cloud" "api.cnv.massopen.cloud:6443" "4.5" "Dockerfile.x86" "docker.io/robertbartlettbaron/acct-mgt.x86:latest" <username> <password>
     """
     )
 

@@ -16,13 +16,13 @@
 #
 # Initial test to confirm that something is working
 #    curl -kv https://acct-mgt.apps.cnv.massopen.cloud/projects/acct-mgt
+#    curl -u <user>:<password> -kv https://acct-mgt.apps.cnv.massopen.cloud/projects/acct-mgt
 #
-#  python3 -m pytest acct-mgt-test.py --amurl https://acct-mgt.apps.cnv.massopen.cloud --basic [username]:[password]
+#  -- testing with no authentication:
+#     python3 -m pytest acct-mgt-test.py --amurl http://am2.apps.cnv.massopen.cloud
 #
-#  --Only for testing:
-#      python3 -m pytest acct-mgt-test.py --amurl http://am2.apps.cnv.massopen.cloud
-#
-#
+#  -- testing with basic authentication
+#     python3 -m pytest acct-mgt-test.py --amurl https://acct-mgt.apps.cnv.massopen.cloud --basic "<admin>:<password>"
 import subprocess
 import re
 import time
